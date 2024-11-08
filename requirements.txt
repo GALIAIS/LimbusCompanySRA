@@ -1,0 +1,23 @@
+# requirements.txt
+paddlepaddle
+paddleocr
+pygetwindow
+opencv-python
+cv2ext
+numpy
+psutil
+mss
+pywin32-ctypes
+pillow
+windows-capture
+pydirectinput-rgx
+bidict
+attrs
+pydirectinput
+ultralytics
+pyautogui
+psutil
+pywinctl
+pywin32
+mss
+loguru
