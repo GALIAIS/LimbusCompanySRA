@@ -6,9 +6,9 @@ echo Initializing Python environment setup...
 set "PYTHON_PATH=%~dp0python\python.exe"
 set "PIP_PATH=%~dp0python\Scripts\pip.exe"
 
-set "TORCH_URL=https://download.pytorch.org/whl/cu118/torch-2.2.0+cu118-cp312-cp312-win_amd64.whl"
-set "TORCHVISION_URL=https://download.pytorch.org/whl/cu118/torchvision-0.17.0+cu118-cp312-cp312-win_amd64.whl"
-set "TORCHAUDIO_URL=https://download.pytorch.org/whl/cu118/torchaudio-2.2.0+cu118-cp312-cp312-win_amd64.whl"
+set "TORCH_URL=https://mirror.sjtu.edu.cn/pytorch-wheels/cu118/torch-2.2.0+cu118-cp312-cp312-win_amd64.whl"
+set "TORCHVISION_URL=https://mirror.sjtu.edu.cn/pytorch-wheels/cu118/torchvision-0.17.0+cu118-cp312-cp312-win_amd64.whl"
+set "TORCHAUDIO_URL=https://mirror.sjtu.edu.cn/pytorch-wheels/cu118/torchaudio-2.2.0+cu118-cp312-cp312-win_amd64.whl"
 
 set "TORCH_WHL=%~dp0pytorch\torch-2.2.0+cu118-cp312-cp312-win_amd64.whl"
 set "TORCHVISION_WHL=%~dp0pytorch\torchvision-0.17.0+cu118-cp312-cp312-win_amd64.whl"
