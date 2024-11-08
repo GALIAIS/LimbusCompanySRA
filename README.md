@@ -26,7 +26,9 @@ cd LimbusCompanySRA
 
 2. **下载Python**:
 
-在[Python](https://www.python.org/downloads/)选择3.11+版本下载 ==Windows embeddable package==
+在[Python](https://www.python.org/downloads/)选择3.11+版本下载 
+
+Windows embeddable package
 
 将解压后的文件夹名称改为python
 
