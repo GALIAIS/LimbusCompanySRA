@@ -15,7 +15,7 @@ set "TORCHVISION_WHL=%~dp0pytorch\torchvision-0.17.0+cu118-cp312-cp312-win_amd64
 set "TORCHAUDIO_WHL=%~dp0pytorch\torchaudio-2.2.0+cu118-cp312-cp312-win_amd64.whl"
 
 if not exist "%PYTHON_PATH%" (
-    echo [ERROR] Python not found. Ensure the python312 folder is present.
+    echo [ERROR] Python not found. Ensure the python folder is present.
     pause
     exit /b
 )
@@ -39,17 +39,17 @@ if not exist "%~dp0pytorch" (
 
 if not exist "%TORCH_WHL%" (
     echo [INFO] Downloading torch .whl file...
-    powershell -Command "Invoke-WebRequest -Uri %TORCH_URL% -OutFile %TORCH_WHL%"
+    curl -L -o "%TORCH_WHL%" %TORCH_URL%
 )
 
 if not exist "%TORCHVISION_WHL%" (
     echo [INFO] Downloading torchvision .whl file...
-    powershell -Command "Invoke-WebRequest -Uri %TORCHVISION_URL% -OutFile %TORCHVISION_WHL%"
+    curl -L -o "%TORCHVISION_WHL%" %TORCHVISION_URL%
 )
 
 if not exist "%TORCHAUDIO_WHL%" (
     echo [INFO] Downloading torchaudio .whl file...
-    powershell -Command "Invoke-WebRequest -Uri %TORCHAUDIO_URL% -OutFile %TORCHAUDIO_WHL%"
+    curl -L -o "%TORCHAUDIO_WHL%" %TORCHAUDIO_URL%
 )
 
 echo Installing PyTorch and related packages from .whl files...
