@@ -32,7 +32,7 @@ Windows embeddable package
 
 将解压后的文件夹名称改为python
 
-将python文件夹下.pth后缀文件内import前的 # 删除
+进入python文件夹下.pth后缀文件内import前的 # 删除
 
 3. **安装依赖**：
 ```bash
