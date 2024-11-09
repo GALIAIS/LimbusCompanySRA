@@ -5,14 +5,17 @@ echo Initializing Python environment setup...
 
 set "PYTHON_PATH=%~dp0python\python.exe"
 set "PIP_PATH=%~dp0python\Scripts\pip.exe"
+set "SCRIPTS_PATH=%~dp0python\Scripts" 
 
 set "TORCH_URL=https://mirror.sjtu.edu.cn/pytorch-wheels/cu118/torch-2.2.0+cu118-cp312-cp312-win_amd64.whl"
 set "TORCHVISION_URL=https://mirror.sjtu.edu.cn/pytorch-wheels/cu118/torchvision-0.17.0+cu118-cp312-cp312-win_amd64.whl"
 set "TORCHAUDIO_URL=https://mirror.sjtu.edu.cn/pytorch-wheels/cu118/torchaudio-2.2.0+cu118-cp312-cp312-win_amd64.whl"
+set "GETPIP_URL=https://bootstrap.pypa.io/get-pip.py"
 
 set "TORCH_WHL=%~dp0pytorch\torch-2.2.0+cu118-cp312-cp312-win_amd64.whl"
 set "TORCHVISION_WHL=%~dp0pytorch\torchvision-0.17.0+cu118-cp312-cp312-win_amd64.whl"
 set "TORCHAUDIO_WHL=%~dp0pytorch\torchaudio-2.2.0+cu118-cp312-cp312-win_amd64.whl"
+set "GET_PIP=%~dp0python\get-pip.py"
 
 if not exist "%PYTHON_PATH%" (
     echo [ERROR] Python not found. Ensure the python folder is present.
@@ -23,7 +26,7 @@ if not exist "%PYTHON_PATH%" (
 if not exist "%PIP_PATH%" (
     echo [INFO] pip not found. Attempting to install pip...
     if not exist "%~dp0python\get-pip.py" (
-        powershell -Command "Invoke-WebRequest -Uri https://bootstrap.pypa.io/get-pip.py -OutFile %~dp0python\get-pip.py"
+        curl -L -o "%GET_PIP%" %GETPIP_URL%
     )
     "%PYTHON_PATH%" "%~dp0python\get-pip.py"
     if errorlevel 1 (
@@ -32,6 +35,9 @@ if not exist "%PIP_PATH%" (
         exit /b
     )
 )
+
+echo [INFO] Setting temporary environment variables...
+set "PATH=%PYTHON_PATH%;%SCRIPTS_PATH%;%PATH%"
 
 if not exist "%~dp0pytorch" (
     mkdir "%~dp0pytorch"
@@ -86,3 +92,4 @@ if exist requirements.txt (
 
 echo All dependencies installed successfully.
 pause
+endlocal
