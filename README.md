@@ -32,10 +32,13 @@ Windows embeddable package
 
 将解压后的文件夹名称改为python
 
+将python文件夹下.pth后缀文件内import前的 # 删除
 
 3. **安装依赖**：
 ```bash
 pip install -r requirements.txt
+
+或直接运行setup.bat
 ```
 
 启动setup.bat自动下载安装torch等依赖,如运行后提示缺少的依赖请通过pip手动安装
