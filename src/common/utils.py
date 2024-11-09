@@ -18,6 +18,7 @@ import mss
 import numpy as np
 from loguru import logger
 from paddleocr import PaddleOCR, draw_ocr
+from PyQt6.QtWidgets import QApplication
 
 logging.disable(logging.DEBUG)
 
