@@ -52,6 +52,8 @@ pip install -r requirements.txt
 ```bash
 python main.py
 ```
+程序目前只支持中文
+需要设置为窗口且分辨率为1920*1200
 
 ---
 
