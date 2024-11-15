@@ -1,21 +1,22 @@
-import sys
 import yaml
-import json
-import toml
-import os
 import argparse
-from pathlib import Path
+import json
+import os
 from copy import deepcopy
 from datetime import datetime
+from pathlib import Path
 from typing import Any, Optional, Union, Callable, Dict, List
-from loguru import logger
-from cryptography.fernet import Fernet, InvalidToken
-import jsonschema
+
 import cerberus
+import jsonschema
+import toml
+import yaml
+from cryptography.fernet import Fernet, InvalidToken
+from loguru import logger
+from marshmallow import Schema, ValidationError as MarshmallowValidationError
 from pydantic import BaseModel, ValidationError
-from marshmallow import Schema, fields, ValidationError as MarshmallowValidationError
-from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
+from watchdog.observers import Observer
 
 config_path = Path(__file__).resolve().parents[2]
 

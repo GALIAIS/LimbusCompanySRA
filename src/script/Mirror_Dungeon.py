@@ -14,7 +14,7 @@ class Mirror_Wuthering:
     """镜牢4流程脚本"""
     loop_count: int = int(cfgm.get("Mirror_Dungeons.mirror_loop_count"))
     current_count: int = 0
-    mirror_switch: bool = cfgm.get("Mirror_Wuthering.mirror_switch")
+    mirror_switch: bool = cfgm.get("Mirror_Dungeons.mirror_switch")
     mirror_pass_flag: bool = None
 
     def start_mirror_wuthering(self):
@@ -40,7 +40,7 @@ class Mirror_Wuthering:
                 confirm_ego_gift_info()
                 team_formation()
                 cfg.img_event.wait(timeout=20)
-                if text_exists(cfg.img_src, r'正在探索第.+层') or not labels_exists(cfg.bboxes, Labels_ID['Drive']):
+                if text_exists(cfg.img_src, r'正在探索第.+层') and not labels_exists(cfg.bboxes, Labels_ID['Drive']):
                     logger.info('结束初始任务')
                     cfg.img_event.clear()
                     mirror_only_flag = False
@@ -162,7 +162,7 @@ class Mirror_Wuthering:
         try:
             if (text_exists(cfg.img_src, r'选择.+饰品') or text_exists(cfg.img_src,
                                                                        r'获得.+饰品.*')) and not text_exists(
-                cfg.img_src, '探索完成'):
+                cfg.img_src, '探索完成') and not text_exists(cfg.img_src, '随机'):
                 return True
             return False
         finally:
@@ -205,8 +205,7 @@ class Mirror_Wuthering:
             check_label_and_clickR(cfg.bboxes, 'Skip', clicks=5)
             # check_text_and_clickR(r'SKIP.*', clicks=3)
             cfg.img_event.wait(timeout=10)
-            if text_exists(cfg.img_src, '商品列表') or text_exists(cfg.img_src, '治疗罪人') or text_exists(cfg.img_src,
-                                                                                                           '编队'):
+            if text_exists(cfg.img_src, '商品列表') or text_exists(cfg.img_src, '治疗罪人'):
                 cfg.img_event.clear()
                 return True
             return False
@@ -275,9 +274,10 @@ class Mirror_Wuthering:
 
     def run(self):
         """循环执行镜牢4流程"""
-        logger.info(f"开始执行镜牢4流程，循环次数为 {self.loop_count}")
+        logger.info(f"开始执行镜牢4流程，循环次数: {self.loop_count}")
         for _ in range(self.loop_count):
             if not self.mirror_switch:
+                logger.info("镜牢4流程未开启")
                 break
             try:
                 self.mirror_pass_flag = False

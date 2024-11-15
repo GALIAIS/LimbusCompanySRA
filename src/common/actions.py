@@ -101,7 +101,7 @@ def choose_random_ego_gift():
     """随机选择E.G.O饰品"""
     logger.info("随机E.G.O饰品选择")
     cfg.img_event.wait(timeout=10)
-
+    print(text_exists(cfg.img_src, r'选择.+饰品'), text_exists(cfg.img_src, r'获得.+饰品.*'))
     while text_exists(cfg.img_src, r'选择.+饰品') and not text_exists(cfg.img_src, r'获得.+饰品.*'):
         cfg.img_event.clear()
 

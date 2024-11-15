@@ -1,4 +1,7 @@
+import os
+import subprocess
 import sys
+from pathlib import Path
 
 sys.path.append('.')
 from PySide6.QtCore import QSize, QEventLoop, QTimer
@@ -6,10 +9,10 @@ from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication
 from qfluentwidgets import (NavigationItemPosition, FluentIcon as FIF, MSFluentWindow,
                             setThemeColor, setTheme, Theme, SplashScreen)
-from Interface.game_interface import GameInterface
-from Interface.home_interface import HomeInterface
+from src.app.Interface.game_interface import GameInterface
+from src.app.Interface.home_interface import HomeInterface
 from src.app.Interface.start_interface import StartInterface
-from Interface.setting_interface import SettingInterface
+from src.app.Interface.setting_interface import SettingInterface
 
 
 class MainWindow(MSFluentWindow):
@@ -30,7 +33,7 @@ class MainWindow(MSFluentWindow):
         self.titleBar.setDoubleClickEnabled(False)
         self.setMicaEffectEnabled(False)
 
-        icon_path = "../assets/logo/LimbusCompany.png"
+        icon_path = "src/assets/logo/LimbusCompany.png"
         window_icon = QIcon(icon_path)
         self.setWindowIcon(window_icon)
         self.setWindowTitle("LimbusCompanySRA")

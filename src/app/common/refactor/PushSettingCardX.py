@@ -25,6 +25,7 @@ class FilePathSettingCard(PushSettingCardX):
 
     def _onButtonClicked(self):
         file_path, _ = QFileDialog.getOpenFileName(self, self.dialog_title, "", self.file_filter)
+        file_path = file_path.replace("/", "\\")
         if file_path:
             self.filePathChanged.emit(file_path)
             self.setValue(file_path)

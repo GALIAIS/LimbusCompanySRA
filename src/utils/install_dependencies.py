@@ -7,17 +7,15 @@ import requests
 import threading
 from tqdm import tqdm
 
+root_path = Path(__file__).resolve().parents[2]
 sys.path.append(str(Path(__file__).resolve().parents[2]))
 from src.app.utils.ConfigManager import cfgm
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-root_path = Path(__file__).resolve().parents[2]
-logger.info(f"Root Path: {root_path}")
-
 python_path = Path(cfgm.get("BaseSetting.Python_path"))
-pip_path = Path(cfgm.get("BaseSetting.pip_path"))
+pip_path = Path(cfgm.get("BaseSetting.Pip_path"))
 
 get_pip_url = "https://bootstrap.pypa.io/get-pip.py"
 torch_url = "https://mirror.sjtu.edu.cn/pytorch-wheels/cu118/torch-2.2.0+cu118-cp312-cp312-win_amd64.whl"
@@ -125,3 +123,6 @@ def install_dependencies():
         logger.warning("[WARNING] 未找到 requirements.txt，跳过安装其他依赖。")
 
     logger.info("所有依赖已成功安装。")
+
+
+install_dependencies()

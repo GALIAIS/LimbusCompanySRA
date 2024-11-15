@@ -1,19 +1,12 @@
-import os
 import sys
 from pathlib import Path
-from typing import Optional
 
-from PySide6.QtCore import QTimer
+from PySide6.QtGui import (Qt)
+from PySide6.QtWidgets import (QWidget, QVBoxLayout, QLabel)
 from loguru import logger
-import threading
-import re
-from PySide6.QtGui import (QPixmap, QPainterPath, QPainter, QFont, Qt)
-from PySide6.QtWidgets import (QWidget, QVBoxLayout, QLabel, QGraphicsDropShadowEffect, QScrollArea, QHBoxLayout,
-                               QStackedWidget, QSpacerItem)
+from qfluentwidgets import (ScrollArea, Theme, qconfig, FluentIcon as FIF)
 
-from qfluentwidgets import (ScrollArea, Theme, qconfig, SegmentedWidget, SettingCardGroup, FluentIcon as FIF,
-                            PrimaryPushSettingCard)
-from src.app.utils.ConfigManager import cfgm
+from src.app.common.setting_card import PrimaryPushSettingCardX
 
 file_path = Path(__file__).resolve().parents[3]
 info_svg = Path(__file__).resolve().parents[2]
@@ -47,7 +40,7 @@ class StartInterface(ScrollArea):
 
     def initCard(self):
         self.state = "启动"
-        self.start_card = PrimaryPushSettingCard(f"{self.state}", FIF.PLAY, "脚本运行", "点击运行脚本")
+        self.start_card = PrimaryPushSettingCardX(f"{self.state}", FIF.PLAY, "脚本运行", "点击运行脚本")
         self.start_card.clicked.connect(self.toggle_game)
 
     def toggle_game(self):

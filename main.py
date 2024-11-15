@@ -1,12 +1,7 @@
 # -*- coding: utf-8 -*-
-import os
 import sys
-from pathlib import Path
-import threading
-import time
 from multiprocessing import Process, Event
-from PySide6.QtCore import QThread, Signal
-from loguru import logger
+from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parent))
 
@@ -15,6 +10,8 @@ from src.script.Mirror_Dungeon import Mirror_Wuthering
 from src.common.logger_config import LoggerConfig
 
 logger_config = LoggerConfig()
+logging.disable(logging.DEBUG)
+
 mw = Mirror_Wuthering()
 
 stop_flag = Event()

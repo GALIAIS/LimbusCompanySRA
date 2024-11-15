@@ -115,7 +115,7 @@ class SettingCardX(QFrame):
         painter.drawRoundedRect(self.rect().adjusted(1, 1, -1, -1), 6, 6)
 
 
-class SwitchSettingCardX(SettingCard):
+class SwitchSettingCardX(SettingCardX):
     """ Setting card with switch button """
 
     checkedChanged = Signal(bool)
@@ -143,7 +143,7 @@ class SwitchSettingCardX(SettingCard):
         super().__init__(icon, title, content, parent)
         self.config_key = config_key
         self.switchButton = SwitchButton(
-            self.tr('Off'), self, IndicatorPosition.RIGHT)
+            self.tr('OFF'), self, IndicatorPosition.RIGHT)
 
         if config_key:
             self.setValue(cfgm.get(config_key))
@@ -168,7 +168,7 @@ class SwitchSettingCardX(SettingCard):
 
         self.switchButton.setChecked(isChecked)
         self.switchButton.setText(
-            self.tr('On') if isChecked else self.tr('Off'))
+            self.tr('ON') if isChecked else self.tr('OFF'))
 
     def setChecked(self, isChecked: bool):
         self.setValue(isChecked)
@@ -177,7 +177,7 @@ class SwitchSettingCardX(SettingCard):
         return self.switchButton.isChecked()
 
 
-class RangeSettingCardX(SettingCard):
+class RangeSettingCardX(SettingCardX):
     """ Setting card with a slider """
 
     valueChanged = Signal(int)
@@ -240,7 +240,7 @@ class RangeSettingCardX(SettingCard):
         self.slider.setValue(value)
 
 
-class PushSettingCardX(SettingCard):
+class PushSettingCardX(SettingCardX):
     """ Setting card with a push button """
 
     clicked = Signal()
@@ -280,7 +280,7 @@ class PushSettingCardX(SettingCard):
         self.button.clicked.connect(self.clicked)
 
 
-class PrimaryPushSettingCardX(PushSettingCard):
+class PrimaryPushSettingCardX(PushSettingCardX):
     """ Push setting card with primary color """
 
     def __init__(self, text, icon, title, content=None, parent=None, config_key: str = None):
@@ -288,8 +288,11 @@ class PrimaryPushSettingCardX(PushSettingCard):
         self.config_key = config_key
         self.button.setObjectName('primaryButton')
 
+    def setText(self, text: str):
+        self.button.setText(text)
 
-class HyperlinkCardX(SettingCard):
+
+class HyperlinkCardX(SettingCardX):
     """ Hyperlink card """
 
     def __init__(self, url, text, icon: Union[str, QIcon, FluentIconBase], title, content=None, parent=None,
@@ -375,7 +378,7 @@ class ColorPickerButtonX(QToolButton):
         painter.drawRoundedRect(self.rect().adjusted(1, 1, -1, -1), 5, 5)
 
 
-class ColorSettingCardX(SettingCard):
+class ColorSettingCardX(SettingCardX):
     """ Setting card with color picker """
 
     colorChanged = Signal(QColor)
@@ -420,7 +423,7 @@ class ColorSettingCardX(SettingCard):
         cfgm.set(self.config_key, color)
 
 
-class ComboBoxSettingCardX(SettingCard):
+class ComboBoxSettingCardX(SettingCardX):
     """ Setting card with a combo box """
 
     def __init__(self, config_key: str, icon: Union[str, QIcon, FluentIconBase], title, content=None,

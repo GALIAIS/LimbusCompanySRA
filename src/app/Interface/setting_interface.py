@@ -63,16 +63,25 @@ class SettingInterface(QScrollArea):
         model_path = find_model(self, str(file_path))
         python_path = find_python(self, str(file_path))
         pip_path = find_pip(self, str(file_path))
-        cfgm.set("BaseSetting.pip_path", pip_path)
 
-        if python_path:
+        if not python_path:
             self.select_python_path = PushSettingCardX(
                 "自动查找解释器", FIF.ADD, "Python解释器路径", str(python_path), None, "BaseSetting.Python_path"
             )
         else:
             self.select_python_path = FilePathSettingCard(
-                FIF.ADD, "Python解释器路径", "如未自动查找到Python解释器路径,请手动选择", None,
+                FIF.ADD, "Python解释器路径", cfgm.get("BaseSetting.Python_path"), None,
                 "BaseSetting.Python_path"
+            )
+
+        if pip_path:
+            self.select_pip_path = PushSettingCardX(
+                "自动查找pip", FIF.ADD, "pip路径", str(python_path), None, "BaseSetting.Pip_path"
+            )
+        else:
+            self.select_pip_path = FilePathSettingCard(
+                FIF.ADD, "pip路径", cfgm.get("BaseSetting.Pip_path"), None,
+                "BaseSetting.Pip_path"
             )
 
         if game_path:
@@ -81,7 +90,7 @@ class SettingInterface(QScrollArea):
             )
         else:
             self.select_game_path = FilePathSettingCard(
-                FIF.ADD, "游戏路径", "如未自动查找到游戏路径,请手动选择", None, "BaseSetting.Game_path"
+                FIF.ADD, "游戏路径", cfgm.get("BaseSetting.Game_path"), None, "BaseSetting.Game_path"
             )
 
         if model_path:
@@ -90,7 +99,7 @@ class SettingInterface(QScrollArea):
             )
         else:
             self.select_model_path = FilePathSettingCard(
-                FIF.ADD, "模型路径", "如未自动查找到模型路径,请手动选择", None, "BaseSetting.Model_path"
+                FIF.ADD, "模型路径", cfgm.get("BaseSetting.Model_path"), None, "BaseSetting.Model_path"
             )
 
         self.state = "安装"
@@ -99,13 +108,14 @@ class SettingInterface(QScrollArea):
         self.install_dependencies.clicked.connect(self.on_install_dependencies)
 
         self.Setting_Group.addSettingCard(self.select_python_path)
+        self.Setting_Group.addSettingCard(self.select_pip_path)
         self.Setting_Group.addSettingCard(self.select_game_path)
         self.Setting_Group.addSettingCard(self.select_model_path)
         self.Setting_Group.addSettingCard(self.install_dependencies)
 
     def on_install_dependencies(self):
         process = QProcess()
-        python_script_path = os.path.join(file_path, 'src/utils/install_dependencies.py')
+        python_script_path = os.path.join(file_path, 'src\\utils\\install_dependencies.py')
         process.startDetached(f'python "{python_script_path}"')
 
     def addSubInterface(self, widget: QLabel, objectName: str, text: str):

@@ -1,8 +1,8 @@
 BaseSetting:
-    Game_path:
-    Model_path:
-    Python_path:
-    pip_path:
+    Game_path: F:\SteamLibrary\steamapps\common\Limbus Company\LimbusCompany.exe
+    Model_path: I:\AI\LimbusCompany\LimbusCompanySRA\src\model\LBC.pt
+    Pip_path: F:\.virtualenvs\LimbusCompanySRA\Scripts\pip.exe
+    Python_path: F:\.virtualenvs\LimbusCompanySRA\Scripts\python.exe
 Enkephalin:
     auto_exchange_enkephalin: false
 Luxcavation:
@@ -27,6 +27,6 @@ Luxcavation:
         selected: 1
     thread_switch: false
 Mirror_Dungeons:
-    mirror_loop_count: '1'
-    mirror_only_flag: false
-    mirror_switch: false
+    mirror_loop_count: '2'
+    mirror_only_flag: true
+    mirror_switch: true
