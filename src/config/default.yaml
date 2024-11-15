@@ -1,0 +1,32 @@
+BaseSetting:
+    Game_path:
+    Model_path:
+    Python_path:
+    pip_path:
+Enkephalin:
+    auto_exchange_enkephalin: false
+Luxcavation:
+    exp_choose:
+        '1': 经验采光#1
+        '2': 经验采光#2
+        '3': 经验采光#3
+        '4': 经验采光#4
+        '5': 经验采光#5
+        '6': 经验采光#6
+        '7': 经验采光#7
+        selected: 1
+    exp_switch: false
+    thread_choose:
+        '1': 傲慢
+        '2': 嫉妒
+        '3': 暴怒
+        '4': 色欲
+        '5': 怠惰
+        '6': 暴食
+        '7': 忧郁
+        selected: 1
+    thread_switch: false
+Mirror_Dungeons:
+    mirror_loop_count: '1'
+    mirror_only_flag: false
+    mirror_switch: false

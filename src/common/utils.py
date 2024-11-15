@@ -18,18 +18,14 @@ import mss
 import numpy as np
 from loguru import logger
 from paddleocr import PaddleOCR, draw_ocr
-from PyQt6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication
 
 logging.disable(logging.DEBUG)
-
 
 from src.common.config import config as cfg
 from src.data.Labels import Labels_ID, LABELS, COLORS
 
 model = YOLO(cfg.absolute_model_path)
-
-app = QApplication(sys.argv)
-screen = app.primaryScreen()
 
 img_lock = threading.Lock()
 ocr_lock = threading.Lock()
@@ -215,7 +211,7 @@ def move_to_center_of_bbox(bbox: list, offset_ratio: tuple = (0.05, 0.1)) -> Non
         logger.error(f"移动到边界框中心失败: {e}")
 
 
-#移动鼠标至显示屏中心
+# 移动鼠标至显示屏中心
 def move_mouse_to_center():
     try:
         cfg.screen_size = pdi.virtual_size()
@@ -226,7 +222,7 @@ def move_mouse_to_center():
         logger.error(f"移动鼠标至显示屏中心失败: {e}")
 
 
-#鼠标滚动
+# 鼠标滚动
 def mouse_scroll(clicks=-10):
     try:
         pdi.scroll(clicks)
@@ -619,7 +615,7 @@ def getBBOX(bboxes: list, label: str) -> list:
     return []
 
 
-#label检测
+# label检测
 def label_exists(bbox: list, label: float) -> bool:
     try:
         if isinstance(bbox, list) and len(bbox) > 5:
@@ -668,31 +664,31 @@ def getWindowShot():
         return None
 
 
-def getWinShot():
-    try:
-        hwnd = wm.get_hwnd()
-        if hwnd is None:
-            logger.error("无法获取窗口句柄")
-            return None
-        img = screen.grabWindow(hwnd).toImage()
-        if img.isNull():
-            logger.error("截图失败，未获取到图像")
-            return None
-        bgra = img.constBits()
-        bgra.setsize(img.bytesPerLine() * img.height())
-        img_np = np.frombuffer(bgra, dtype=np.uint8).reshape((img.height(), img.width(), 4))
-
-        img_rgb = cv2.cvtColor(img_np, cv2.COLOR_BGRA2BGR)
-        return img_rgb
-    except AttributeError as e:
-        logger.error("获取窗口句柄时发生 AttributeError，可能窗口不存在或不可见。")
-        logger.exception(e)
-    except MemoryError:
-        logger.error("内存不足，截图失败。")
-    except Exception as e:
-        logger.error(f"未知错误: {e}")
-        logger.exception(e)
-    return None
+# def getWinShot():
+#     try:
+#         hwnd = wm.get_hwnd()
+#         if hwnd is None:
+#             logger.error("无法获取窗口句柄")
+#             return None
+#         img = screen.grabWindow(hwnd).toImage()
+#         if img.isNull():
+#             logger.error("截图失败，未获取到图像")
+#             return None
+#         bgra = img.constBits()
+#         bgra.setsize(img.bytesPerLine() * img.height())
+#         img_np = np.frombuffer(bgra, dtype=np.uint8).reshape((img.height(), img.width(), 4))
+#
+#         img_rgb = cv2.cvtColor(img_np, cv2.COLOR_BGRA2BGR)
+#         return img_rgb
+#     except AttributeError as e:
+#         logger.error("获取窗口句柄时发生 AttributeError，可能窗口不存在或不可见。")
+#         logger.exception(e)
+#     except MemoryError:
+#         logger.error("内存不足，截图失败。")
+#     except Exception as e:
+#         logger.error(f"未知错误: {e}")
+#         logger.exception(e)
+#     return None
 
 
 # 判断坐标是否在某个区域
@@ -764,27 +760,27 @@ def window_update_data():
     cfg.bboxes = getDetection(cfg.img_src)
 
 
-#随机移动鼠标并更新数据
+# 随机移动鼠标并更新数据
 def window_update_dataX():
     move_mouse_random()
     window_update_data()
 
 
-#IMGSRC数据更新
+# IMGSRC数据更新
 # def imgsrc_update_thread():
 #     while True:
 #         with cfg.lock:
 #             cfg.img_src = getWindowShot()
 #             img_update_event.set()
 #             time.sleep(0.5)
-#BBOXES数据更新
+# BBOXES数据更新
 # def bbox_update_thread():
 #     while True:
 #         with cfg.lock:
 #             cfg.bboxes = getDetection(cfg.img_src)
 #             bboxes_update_event.set()
 #             time.sleep(0.5)
-#OCR数据更新
+# OCR数据更新
 # def ocr_update_thread():
 #     while True:
 #         with cfg.lock:

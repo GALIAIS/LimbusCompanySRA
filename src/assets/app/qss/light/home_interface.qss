@@ -1,0 +1,26 @@
+#view {
+    background-color: #FFFFFF;
+}
+
+#homeInterface {
+    background-color: #FFFFFF;
+}
+
+#bannerWidget {
+    background-color: black;
+    color: black;
+    font-size: 35px;
+    font-weight: bold;
+}
+
+#galleryLabel {
+    font-family: Arial;
+    color: white;
+    font-size: 35px;
+    font-weight: bold;
+}
+
+#footerWidget {
+    font-size: 12px;
+    color: black;
+}

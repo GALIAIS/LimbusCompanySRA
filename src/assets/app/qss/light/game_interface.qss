@@ -1,0 +1,7 @@
+#scrollWidget {
+    background-color: #FFFFFF;
+}
+
+#gameInterface {
+    background-color: #FFFFFF;
+}

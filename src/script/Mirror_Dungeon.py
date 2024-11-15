@@ -6,21 +6,20 @@ from attrs import define
 # from src.common.utils import *
 import src.common.config as cfg
 from src.common.actions import *
+from src.app.utils.ConfigManager import *
 
 
 @define
 class Mirror_Wuthering:
     """镜牢4流程脚本"""
-    loop_count: int = cfg.mirror_loop_count
+    loop_count: int = int(cfgm.get("Mirror_Dungeons.mirror_loop_count"))
     current_count: int = 0
-    mirror_switch: bool = cfg.mirror_switch
+    mirror_switch: bool = cfgm.get("Mirror_Wuthering.mirror_switch")
     mirror_pass_flag: bool = None
-
-    first_run: bool = True
 
     def start_mirror_wuthering(self):
         """开始镜牢4流程"""
-        mirror_only_flag: bool = True
+        mirror_only_flag: bool = cfgm.get("Mirror_Dungeons.mirror_only_flag")
         TIMEOUT = 10 * 60
         MAX_RETRIES = 3
         logger.info("启动镜牢4流程")
@@ -246,7 +245,7 @@ class Mirror_Wuthering:
             check_text_and_clickR(r'SKIP.*', clicks=10)
             cfg.img_event.wait(timeout=10)
             if text_exists(cfg.img_src, r'SKIP.*') and not text_exists(
-                cfg.img_src, '商品列表') and not text_exists(cfg.img_src, '治疗罪人'):
+                    cfg.img_src, '商品列表') and not text_exists(cfg.img_src, '治疗罪人'):
                 cfg.img_event.clear()
                 return True
             return False

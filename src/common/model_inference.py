@@ -142,13 +142,13 @@ def window_update_data():
     cfg.bboxes = getDetection(cfg.img_src)
 
 
-#随机移动鼠标并更新数据
+# 随机移动鼠标并更新数据
 def window_update_dataX():
     move_mouse_random()
     window_update_data()
 
 
-#仅更新数据
+# 仅更新数据
 def window_update_thread():
     while True:
         window_update_data()  # 实时更新屏幕信息

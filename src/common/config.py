@@ -70,12 +70,10 @@ class Config:
     img_ocr_src: Optional[np.array] = None
 
     # 事件流程
-    mirror_loop_count: int = 3
-    mirror_switch: bool = True
     mirror_dungeon_count: int = 0
     battle_count: int = 0
 
-    #线程
+    # 线程
     lock = threading.Lock()
     img_event = threading.Event()
     bboxes_event = threading.Event()
