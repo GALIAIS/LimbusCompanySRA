@@ -1,9 +1,9 @@
 import sys
 from pathlib import Path
 
-from PySide6.QtGui import (Qt, QIntValidator)
+from PySide6.QtGui import (Qt, QIntValidator, QFont)
 from PySide6.QtWidgets import (QWidget, QStackedWidget, QLineEdit, QDialog, QCheckBox, QGridLayout, QComboBox, QSpinBox,
-                               QDialogButtonBox, QListWidget)
+                               QDialogButtonBox, QListWidget, QListWidgetItem)
 from loguru import logger
 from qfluentwidgets import (ScrollArea, Theme, qconfig, SegmentedWidget, SettingCardGroup, FluentIcon as FIF,
                             MessageBoxBase)
@@ -124,7 +124,6 @@ class GameInterface(ScrollArea):
                                              validator=QIntValidator(1, 100)))
 
     def open_setting_dialog(self, setting_key, setting_card, dialog_title, label_text, setting_type, **kwargs):
-        """打开设置对话框"""
         initial_value = cfgm.get(setting_key)
 
         if setting_type == "CheckBox" and isinstance(initial_value, str):
@@ -210,7 +209,6 @@ class GameInterface(ScrollArea):
 
 
 class SettingDialog(QDialog):
-    """高度可复用和可定制的设置对话框"""
 
     def __init__(self, title="设置", parent=None):
         super().__init__(parent=parent)
@@ -227,7 +225,6 @@ class SettingDialog(QDialog):
         self.gridLayout.addWidget(self.buttonBox, 100, 0, 1, 2)
 
     def addSetting(self, setting_type, label_text, key, initial_value=None, **kwargs):
-        """添加设置项"""
         row = len(self.settings)
 
         label = QLabel(label_text, self)
@@ -264,7 +261,6 @@ class SettingDialog(QDialog):
         self.settings[key] = widget
 
     def getSettingValue(self, key):
-        """获取设置项的值"""
         widget = self.settings.get(key)
         if widget is None:
             return None
@@ -281,7 +277,6 @@ class SettingDialog(QDialog):
             raise TypeError(f"不支持的控件类型: {type(widget)}")
 
     def validate(self):
-        """验证所有设置项"""
         for key, widget in self.settings.items():
             if isinstance(widget, QLineEdit) and not widget.text().isdigit():
                 logger.warning(f"{key} 输入无效，请输入有效整数。")
@@ -290,21 +285,26 @@ class SettingDialog(QDialog):
 
 
 class MultiSelectDialog(QDialog):
-    """多选对话框"""
 
     def __init__(self, title, items, selected_items=None, parent=None):
         super().__init__(parent=parent)
         self.setWindowTitle(title)
+        self.setFixedSize(400, 300)
 
         self.items = items
         self.selected_items = selected_items or []
 
         self.list_widget = QListWidget(self)
         self.list_widget.setSelectionMode(QListWidget.SelectionMode.MultiSelection)
-        for item in self.items:
-            self.list_widget.addItem(item)
 
-        # 选中已选择的项目
+        for item in self.items:
+            list_item = QListWidgetItem(item)
+            font = QFont()
+            font.setPointSize(12)
+            font.setFamily("Arial")
+            list_item.setFont(font)
+            self.list_widget.addItem(list_item)
+
         for i in range(self.list_widget.count()):
             item = self.list_widget.item(i)
             if item.text() in self.selected_items:
@@ -318,5 +318,4 @@ class MultiSelectDialog(QDialog):
         layout.addWidget(self.ok_button)
 
     def getSelectedItems(self):
-        """获取选中的项目"""
         return [item.text() for item in self.list_widget.selectedItems()]
