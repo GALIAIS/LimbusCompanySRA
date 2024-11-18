@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
-import os
 import sys
-import numpy as np
-from attrs import asdict, define, make_class, Factory
-from typing import Optional
 import threading
-from loguru import logger
-from src.data.ui_text import UI_TEXT
+from pathlib import Path
+from typing import Optional
+
+import numpy as np
+from attrs import define, Factory
 
 
 @define
@@ -17,9 +16,12 @@ class Config:
     window_process_name: str = "LimbusCompany.exe"
     handle: int = 0
     pid: int = 0
-    model_dir: str = os.path.dirname(__file__)
-    model_path: str = '../model/LBC.pt'
-    absolute_model_path: str = os.path.join(model_dir, model_path)
+    if getattr(sys, 'frozen', False):
+        base_path = Path(sys._MEIPASS)
+    else:
+        base_path = Path(__file__).resolve().parents[1]
+
+    model_path = base_path / "model" / "LBC.pt"
 
     # 窗口
     window_width: int = 0
@@ -79,10 +81,6 @@ class Config:
     bboxes_event = threading.Event()
     ocr_event = threading.Event()
 
-    def __post_init__(self):
-        """初始化绝对模型路径"""
-        self.absolute_model_path = os.path.join(self.model_dir, self.model_path)
-
     def update_window_position(self, left: int, top: int, width: int, height: int):
         """更新窗口位置信息"""
         self.window_left = left
@@ -98,10 +96,4 @@ class Config:
         self.screen_height = height
 
 
-# 配置实例
 config = Config()
-
-
-def get_ui_text(language, key):
-    """获取用户界面文本"""
-    return UI_TEXT.get(language, {}).get(key, "")

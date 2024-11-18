@@ -1,20 +1,17 @@
-import os
 import sys
 from pathlib import Path
-from typing import Optional
 
 from PySide6.QtCore import QProcess
+from PySide6.QtWidgets import (QWidget, QScrollArea)
 from loguru import logger
-import re
-from PySide6.QtGui import (QPixmap, QPainterPath, QPainter, QFont, Qt)
-from PySide6.QtWidgets import (QWidget, QVBoxLayout, QLabel, QGraphicsDropShadowEffect, QScrollArea, QHBoxLayout,
-                               QStackedWidget, QSpacerItem)
+from qfluentwidgets import (Theme, qconfig, SettingCardGroup, FluentIcon as FIF)
 
-from qfluentwidgets import (ScrollArea, Theme, qconfig, SegmentedWidget, SettingCardGroup, FluentIcon as FIF)
+if getattr(sys, 'frozen', False):
+    BASE_DIR = Path(sys.argv[0]).resolve().parents[3]
+else:
+    BASE_DIR = Path(__file__).resolve().parents[3]
 
-file_path = Path(__file__).resolve().parents[3]
-info_svg = Path(__file__).resolve().parents[2]
-sys.path.append(str(file_path))
+sys.path.append(str(BASE_DIR))
 
 from src.app.common.style_sheet import StyleSheet
 from src.app.utils.PathFind import *
@@ -60,29 +57,17 @@ class SettingInterface(QScrollArea):
 
         steam_game_paths = get_installed_steam_games()
         game_path = find_limbus(self, steam_game_paths.get("1973530"))
-        model_path = find_model(self, str(file_path))
-        python_path = find_python(self, str(file_path))
-        pip_path = find_pip(self, str(file_path))
+        model_path = find_model(self, str(BASE_DIR))
 
-        if not python_path:
-            self.select_python_path = PushSettingCardX(
-                "自动查找解释器", FIF.ADD, "Python解释器路径", str(python_path), None, "BaseSetting.Python_path"
-            )
-        else:
-            self.select_python_path = FilePathSettingCard(
-                FIF.ADD, "Python解释器路径", cfgm.get("BaseSetting.Python_path"), None,
-                "BaseSetting.Python_path"
-            )
+        self.select_python_path = FilePathSettingCard(
+            FIF.ADD, "Python解释器路径", cfgm.get("BaseSetting.Python_path"), None,
+            "BaseSetting.Python_path"
+        )
 
-        if pip_path:
-            self.select_pip_path = PushSettingCardX(
-                "自动查找pip", FIF.ADD, "pip路径", str(python_path), None, "BaseSetting.Pip_path"
-            )
-        else:
-            self.select_pip_path = FilePathSettingCard(
-                FIF.ADD, "pip路径", cfgm.get("BaseSetting.Pip_path"), None,
-                "BaseSetting.Pip_path"
-            )
+        self.select_pip_path = FilePathSettingCard(
+            FIF.ADD, "pip路径", cfgm.get("BaseSetting.Pip_path"), None,
+            "BaseSetting.Pip_path"
+        )
 
         if game_path:
             self.select_game_path = PushSettingCardX(
@@ -115,7 +100,7 @@ class SettingInterface(QScrollArea):
 
     def on_install_dependencies(self):
         process = QProcess()
-        python_script_path = os.path.join(file_path, 'src\\utils\\install_dependencies.py')
+        python_script_path = os.path.join(BASE_DIR, 'src\\utils\\install_dependencies.py')
         process.startDetached(f'python "{python_script_path}"')
 
     def addSubInterface(self, widget: QLabel, objectName: str, text: str):

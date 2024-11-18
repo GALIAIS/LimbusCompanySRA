@@ -1,20 +1,11 @@
 # -*- coding: utf-8 -*-
-import os
-import sys
-import torch
-from ultralytics import YOLO
-import threading
-import cv2
-from mss import mss
+from time import time
+
 import mss
-import pywinctl as pwc
-import numpy as np
-from time import time, sleep
-from loguru import logger
-from typing import Optional
+
 from src.common.utils import *
 
-model = YOLO(cfg.absolute_model_path)
+model = YOLO(cfg.model_path)
 
 COLORS = [
     (56, 158, 13), (92, 219, 211), (9, 109, 217), (173, 198, 255), (146, 84, 222), (247, 89, 171),
@@ -29,7 +20,8 @@ COLORS = [
     (128, 0, 128), (255, 165, 0), (128, 128, 0), (192, 192, 192), (255, 20, 147), (210, 180, 140),
     (34, 139, 34), (255, 99, 71), (75, 0, 130), (255, 228, 225), (255, 228, 181), (153, 50, 204),
     (139, 69, 19), (255, 127, 80), (240, 230, 140), (245, 222, 179), (0, 100, 0), (205, 92, 92),
-    (135, 206, 250), (255, 240, 245), (218, 112, 214), (240, 128, 128), (255, 239, 196), (0, 255, 127), (176, 84, 222)
+    (135, 206, 250), (255, 240, 245), (218, 112, 214), (240, 128, 128), (255, 239, 196), (0, 255, 127), (146, 20, 222),
+    (73, 156, 215), (146, 255, 17), (255, 105, 52), (20, 155, 125)
 ]
 
 LABELS = [
@@ -39,7 +31,9 @@ LABELS = [
     "E.G.O", "E.G.O Gift", "EXP", "Encounter Reward Card", "End Node",
     "Enemy", "Enkephalin", "Enter", "Event Node", "Event Option",
     "Explored Node", "Extract", "Give Up", "Halt Exploration", "Heal Sinner",
-    "Inactive Button", "Leava", "Luxcavation", "Mailbox", "Mirror Dungeon",
+    "Inactive Button", "Leava", "Luxcavation", "Luxcavation-EXP",
+    "Luxcavation-Thread", "Mailbox", "Maximum",
+    "Minimum", "Mirror Dungeon",
     "Refresh", "Resume", "Safe Node", "Settings", "Sinner", "Skip", "Start",
     "Start Node", "Themes Pack", "Therter", "Thread", "Unavailable Node",
     "Win Rate", "Window", "Pause"
@@ -142,14 +136,12 @@ def window_update_data():
     cfg.bboxes = getDetection(cfg.img_src)
 
 
-# 随机移动鼠标并更新数据
 def window_update_dataX():
     move_mouse_random()
     window_update_data()
 
 
-# 仅更新数据
 def window_update_thread():
     while True:
-        window_update_data()  # 实时更新屏幕信息
+        window_update_data()
         time.sleep(0.1)

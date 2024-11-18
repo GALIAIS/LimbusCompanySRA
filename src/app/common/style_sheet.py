@@ -1,9 +1,14 @@
+import sys
 from enum import Enum
 from pathlib import Path
 
-from qfluentwidgets import StyleSheetBase, Theme, isDarkTheme, qconfig
+from qfluentwidgets import StyleSheetBase, Theme, qconfig
 
-StyleSheet_dir = Path(__file__).resolve().parent / '../../assets/app/qss/'
+if getattr(sys, 'frozen', False):
+    StyleSheet_dir = Path(sys.argv[0]).resolve().parent / '../../assets/app/qss/'
+else:
+    StyleSheet_dir = Path(__file__).resolve().parent / '../../assets/app/qss/'
+
 StyleSheet_dir = StyleSheet_dir.resolve()
 
 

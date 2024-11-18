@@ -1,16 +1,21 @@
-import os
 import sys
 import traceback
+import uuid
 from datetime import datetime
 from pathlib import Path
+
 from loguru import logger
-import uuid
+
 
 class LoggerConfig:
     """日志配置类"""
 
     def __init__(self):
-        self.file_dir = Path(__file__).resolve().parent.parent
+        if getattr(sys, 'frozen', False):
+            self.file_dir = Path(sys.argv[0]).resolve().parent.parent
+        else:
+            self.file_dir = Path(__file__).resolve().parent.parent
+
         self.log_dirs = {
             "log": self.file_dir / 'log',
             "error": self.file_dir / 'log' / 'error',
@@ -45,7 +50,8 @@ class LoggerConfig:
 
         sys.excepthook = self.log_exception
 
-    def add_file_logger(self, log_type, log_format, timestamp, level, rotation, retention, sub_dir=None, serialize=False):
+    def add_file_logger(self, log_type, log_format, timestamp, level, rotation, retention, sub_dir=None,
+                        serialize=False):
         """为日志文件添加配置"""
         log_dir = self.log_dirs[log_type] if not sub_dir else self.log_dirs[sub_dir]
         logger.add(

@@ -1,19 +1,26 @@
 # -*- coding: utf-8 -*-
-import sys
-import time
-from attrs import define
 
-# from src.common.utils import *
-import src.common.config as cfg
+from src.common.utils import *
 from src.common.actions import *
-from src.app.utils.ConfigManager import *
 
 
 @define
-class Luxcavation_EXP:
-    pass
+class Luxcavation:
+    def Luxcavation_EXP(self):
+        cfg.bboxes_event.wait(timeout=10)
+        while labels_exists(cfg.bboxes, Labels_ID['EXP']) and labels_exists(cfg.bboxes, Labels_ID['Thread']):
+            cfg.bboxes_event.clear()
+            if cfgm.get("Luxcavation.exp_switch"):
+                while cfgm.get("Luxcavation.exp_choose.exp_loop_count") >= current_loop_count:
+                    cfg.bboxes_event.wait(timeout=10)
+                    check_label_and_click(cfg.bboxes, 'EXP')
+                    cfg.bboxes_event.clear()
+
+                current_loop_count = 1
+
+    def Luxcavation_Thread(self):
+        thread_switch: bool = False
+        thread_choose: int = 0
 
 
-@define
-class Luxcavation_Thread:
-    pass
+luxcavation = Luxcavation()

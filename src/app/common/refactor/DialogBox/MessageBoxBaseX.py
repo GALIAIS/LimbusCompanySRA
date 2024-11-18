@@ -1,11 +1,12 @@
 import sys
 from pathlib import Path
 
-from PySide6.QtWidgets import QFrame, QVBoxLayout, QHBoxLayout, QPushButton, QDialog
-from PySide6.QtGui import QColor
-from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QVBoxLayout, QPushButton
 
-sys.path.append(str(Path(__file__).resolve().parents[4]))
+if getattr(sys, 'frozen', False):
+    sys.path.append(str(Path(sys.argv[0]).resolve().parents[4]))
+else:
+    sys.path.append(str(Path(__file__).resolve().parents[4]))
 
 from src.app.common.refactor.DialogBox.MaskDialogBaseX import *
 

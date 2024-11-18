@@ -4,11 +4,10 @@ from typing import Union
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QColor, QIcon, QPainter
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QToolButton, QVBoxLayout, QPushButton
-
 from qfluentwidgets import IconWidget, drawIcon, FluentIconBase, FluentStyleSheet, isDarkTheme, SwitchButton, \
     IndicatorPosition, Slider, HyperlinkButton, ColorDialog
-from qfluentwidgets.components.settings.setting_card import SettingIconWidget, SettingCard, PushSettingCard, \
-    ColorPickerButton
+from qfluentwidgets.components.settings.setting_card import SettingIconWidget, ColorPickerButton
+
 from src.app.common.refactor.Widgets.ComboBoxX import ComboBoxX
 from src.app.utils.ConfigManager import cfgm
 

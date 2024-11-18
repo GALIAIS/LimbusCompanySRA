@@ -1,31 +1,30 @@
 # -*- coding: utf-8 -*-
-import sys
-import logging
-from attrs import asdict, define, make_class, Factory
-import pydirectinput as pdi
-from ultralytics import YOLO
-import pyautogui
-import random
-import psutil
 import ctypes
-import pywinctl as pwc
-import win32gui
-import cv2
+import logging
+import random
+import re
 import threading
 import time
-import re
+
+import cv2
 import mss
 import numpy as np
+import psutil
+import pyautogui
+import pydirectinput as pdi
+import pywinctl as pwc
+import win32gui
+from attrs import define
 from loguru import logger
-from paddleocr import PaddleOCR, draw_ocr
-from PySide6.QtWidgets import QApplication
+from paddleocr import PaddleOCR
+from ultralytics import YOLO
 
 logging.disable(logging.DEBUG)
 
 from src.common.config import config as cfg
 from src.data.Labels import Labels_ID, LABELS, COLORS
 
-model = YOLO(cfg.absolute_model_path)
+model = YOLO(cfg.model_path)
 
 img_lock = threading.Lock()
 ocr_lock = threading.Lock()
@@ -239,6 +238,35 @@ def move_to_center_and_drag(bbox: list) -> None:
             x0, y0, x1, y1 = float(bbox[0]), float(bbox[1]), float(bbox[2]), float(bbox[3])
             target_coords = (int((x0 + x1) / 2), int((y0 + y1) / 2))
             end_coords = (target_coords[0], target_coords[1] + 300)
+            current_mouse_pos = get_mouse_pos()
+            move_mouse_to(current_mouse_pos[0], current_mouse_pos[1], target_coords[0], target_coords[1])
+            mouse_down(target_coords[0], target_coords[1])
+            move_mouse_to(target_coords[0], target_coords[1], end_coords[0], end_coords[1])
+            mouse_up(target_coords[0], target_coords[1])
+    except Exception as e:
+        logger.error(f"拖拽到边界框中心失败: {e}")
+
+
+def move_to_center_and_dragR(bbox: list, direction: str = 'down', distance: int = 300) -> None:
+    """将鼠标移动到中心点并拖拽"""
+    try:
+        if bbox and isinstance(bbox[0], list):
+            bbox = bbox[0]
+        if bbox:
+            x0, y0, x1, y1 = float(bbox[0]), float(bbox[1]), float(bbox[2]), float(bbox[3])
+            target_coords = (int((x0 + x1) / 2), int((y0 + y1) / 2))
+
+            if direction == 'down':
+                end_coords = (target_coords[0], target_coords[1] + distance)
+            elif direction == 'up':
+                end_coords = (target_coords[0], target_coords[1] - distance)
+            elif direction == 'left':
+                end_coords = (target_coords[0] - distance, target_coords[1])
+            elif direction == 'right':
+                end_coords = (target_coords[0] + distance, target_coords[1])
+            else:
+                raise ValueError(f"Invalid direction: {direction}")
+
             current_mouse_pos = get_mouse_pos()
             move_mouse_to(current_mouse_pos[0], current_mouse_pos[1], target_coords[0], target_coords[1])
             mouse_down(target_coords[0], target_coords[1])
@@ -603,6 +631,18 @@ def check_label_and_drag(bboxes: list, label: str) -> None:
         logger.error(f"检查标签并拖拽失败: {e}")
 
 
+# 检查Label和Text是否存在并移动鼠标拖拽
+def check_label_text_and_drag(theme_pack: str, bboxes: list, label: str) -> None:
+    try:
+        if bboxes:
+            for bbox in bboxes:
+                if label_exists(bbox, Labels_ID[label]) and is_within(bbox, theme_pack):
+                    move_to_center_and_dragR(bbox, direction='down')
+                    break
+    except Exception as e:
+        logger.error(f"检查标签和文本并拖拽失败: {e}")
+
+
 # 获取yolo的bbox
 def getBBOX(bboxes: list, label: str) -> list:
     try:
@@ -662,33 +702,6 @@ def getWindowShot():
     except Exception as e:
         logger.error(f"获取窗口截图失败: {e}")
         return None
-
-
-# def getWinShot():
-#     try:
-#         hwnd = wm.get_hwnd()
-#         if hwnd is None:
-#             logger.error("无法获取窗口句柄")
-#             return None
-#         img = screen.grabWindow(hwnd).toImage()
-#         if img.isNull():
-#             logger.error("截图失败，未获取到图像")
-#             return None
-#         bgra = img.constBits()
-#         bgra.setsize(img.bytesPerLine() * img.height())
-#         img_np = np.frombuffer(bgra, dtype=np.uint8).reshape((img.height(), img.width(), 4))
-#
-#         img_rgb = cv2.cvtColor(img_np, cv2.COLOR_BGRA2BGR)
-#         return img_rgb
-#     except AttributeError as e:
-#         logger.error("获取窗口句柄时发生 AttributeError，可能窗口不存在或不可见。")
-#         logger.exception(e)
-#     except MemoryError:
-#         logger.error("内存不足，截图失败。")
-#     except Exception as e:
-#         logger.error(f"未知错误: {e}")
-#         logger.exception(e)
-#     return None
 
 
 # 判断坐标是否在某个区域

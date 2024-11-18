@@ -1,16 +1,16 @@
 import sys
-from enum import Enum
 from pathlib import Path
 
-from PySide6.QtCore import QLocale, QSize
 from qfluentwidgets import (
-    qconfig, QConfig, ConfigItem, OptionsConfigItem, OptionsValidator,
-    BoolValidator, RangeConfigItem, RangeValidator, FolderValidator,
-    EnumSerializer, ConfigSerializer, __version__
+    QConfig, ConfigItem, BoolValidator
 )
 
-file_dir = Path(__file__).resolve().parents[3]
-from src.app.utils.ConfigManager import cfgm
+if getattr(sys, 'frozen', False):
+    BASE_DIR = Path(sys.argv[0]).resolve().parents[3]
+else:
+    BASE_DIR = Path(__file__).resolve().parents[3]
+
+sys.path.append(str(BASE_DIR))
 
 
 class Config(QConfig):

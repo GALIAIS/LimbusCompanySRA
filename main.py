@@ -3,16 +3,18 @@ import sys
 from multiprocessing import Process, Event
 from pathlib import Path
 
-sys.path.append(str(Path(__file__).resolve().parent))
+if getattr(sys, 'frozen', False):
+    sys.path.append(str(Path(sys.argv[0]).resolve().parent))
+else:
+    sys.path.append(str(Path(__file__).resolve().parent))
 
 from src.common.utils import *
-from src.script.Mirror_Dungeon import Mirror_Wuthering
+from src.common.actions import run
 from src.common.logger_config import LoggerConfig
+from src.app.utils.ConfigManager import cfgm
 
 logger_config = LoggerConfig()
 logging.disable(logging.DEBUG)
-
-mw = Mirror_Wuthering()
 
 stop_flag = Event()
 
@@ -20,10 +22,9 @@ stop_flag = Event()
 def run_automation_task():
     logger.info("任务启动")
 
-    mdw = Mirror_Wuthering()
     img_thread = threading.Thread(target=imgsrc_update_thread, name="IMG更新线程", daemon=True)
     bbox_thread = threading.Thread(target=bboxes_update_thread, name="BBoxes更新线程", daemon=True)
-    mirror_wuthering = threading.Thread(target=mdw.run, name="Mirror Dungeon", daemon=True)
+    mirror_wuthering = threading.Thread(target=run, name="Mirror Dungeon", daemon=True)
 
     img_thread.start()
     bbox_thread.start()

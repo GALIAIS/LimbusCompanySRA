@@ -1,19 +1,94 @@
-import time
-
 from src.common.utils import *
+from src.app.utils.ConfigManager import cfgm
+from src.script.Mirror_Dungeon import mirror_dungeon
+from src.script.Luxcavation import luxcavation
+
+
+def run():
+    current_count: int = 1
+    mirror_switch: bool = cfgm.get("Mirror_Dungeons.mirror_switch")
+
+    """循环执行镜牢4流程"""
+    for _ in range(int(cfgm.get("Mirror_Dungeons.mirror_loop_count"))):
+        if not mirror_switch:
+            logger.info("镜牢4流程未开启")
+            break
+        try:
+            logger.info(f"开始执行镜牢4流程")
+            mirror_pass_flag = False
+            mirror_dungeon.start_mirror_wuthering()
+            current_count += 1
+            logger.info(f"已完成第 {current_count} 次镜牢4")
+            logger.info(f"即将进入第 {current_count + 1} 次镜牢4")
+        except Exception as e:
+            logger.error(f"镜牢4流程出错: {e}")
+            logger.info("尝试回到主界面...")
+            return_to_main_menu()
+
+    for _ in range(int(cfgm.get("Luxcavation.luxcavation_loop_count"))):
+        if not cfgm.get("Luxcavation.exp_switch"):
+            logger.info("EXP副本流程未开启")
+            break
+        try:
+            logger.info(f"开始执行EXP副本流程")
+            exp_pass_flag = False
+            luxcavation.Luxcavation_EXP()
+            current_count += 1
+            logger.info(f"已完成第 {current_count} 次EXP副本")
+            logger.info(f"即将进入第 {current_count + 1} 次EXP副本")
+        except Exception as e:
+            logger.error(f"EXP副本流程出错: {e}")
+            logger.info("尝试回到主界面...")
+            return_to_main_menu()
+
+    for _ in range(int(cfgm.get("Luxcavation.luxcavation_loop_count"))):
+        if not cfgm.get("Luxcavation.thread_switch"):
+            logger.info("Thread副本流程未开启")
+            break
+        try:
+            logger.info(f"开始执行Thread副本流程")
+            thread_pass_flag = False
+            luxcavation.Luxcavation_Thread()
+            current_count += 1
+            logger.info(f"已完成第 {current_count} 次Thread副本")
+            logger.info(f"即将进入第 {current_count + 1} 次Thread副本")
+        except Exception as e:
+            logger.error(f"Thread副本流程出错: {e}")
+            logger.info("尝试回到主界面...")
+            return_to_main_menu()
+
+
+def navigate_to_luxcavation():
+    logger.info("判断是否处于驾驶席界面...")
+    cfg.bboxes_event.wait(timeout=10)
+    while labels_exists(cfg.bboxes, Labels_ID['Drive']) and not labels_exists(cfg.bboxes, Labels_ID['Luxcavation']):
+        check_label_and_click(cfg.bboxes, 'Drive')
+        logger.info("已切换到驾驶席界面")
+        cfg.bboxes_event.clear()
+
+    cfg.bboxes_event.wait(timeout=10)
+    while labels_exists(cfg.bboxes, Labels_ID['Mirror Dungeon']) and labels_exists(cfg.bboxes,
+                                                                                   Labels_ID['Luxcavation']):
+        check_label_and_click(cfg.bboxes, 'Luxcavation')
+        logger.info("已切换到采光界面")
+        cfg.bboxes_event.clear()
+
+        cfg.bboxes_event.wait(timeout=10)
+        if labels_exists(cfg.bboxes, Labels_ID['EXP']) and labels_exists(cfg.bboxes, Labels_ID['Thread']):
+            break
+        cfg.bboxes_event.clear()
 
 
 def navigate_to_mirror_dungeons():
     """导航到镜像迷宫界面"""
     logger.info("判断是否处于驾驶席界面...")
 
+    cfg.img_event.wait(timeout=10)
     cfg.bboxes_event.wait(timeout=10)
     while labels_exists(cfg.bboxes, Labels_ID['Drive']) and not text_exists(cfg.img_src, '镜像迷宫'):
         check_label_and_click(cfg.bboxes, 'Drive')
         logger.info("已切换到驾驶席界面")
-        cfg.img_event.wait(timeout=10)
         cfg.img_event.clear()
-        cfg.bboxes_event.wait(timeout=10)
         cfg.bboxes_event.clear()
     logger.info("结束驾驶席界面检测")
 
@@ -229,18 +304,25 @@ def team_formation():
 
 def choose_themes_pack():
     """选择主题卡包"""
-    # logger.info("Themes Pack选择")
+    logger.info("Themes Pack选择")
+    theme_packs: list = cfgm.get("Mirror_Dungeons.theme_pack_choose")
 
     cfg.img_event.wait(timeout=10)
     while text_exists(cfg.img_src, r'选择.+层主题卡包'):
         cfg.img_event.clear()
-
         cfg.img_event.wait(timeout=10)
-        if text_exists(cfg.img_src, r'.*主题卡包'):
-            cfg.bboxes_event.wait(timeout=10)
-            check_label_and_drag(cfg.bboxes, 'Themes Pack')
-            cfg.bboxes_event.clear()
-            break
+
+        for theme_pack in theme_packs:
+            if text_exists(cfg.img_src, theme_pack):
+                cfg.bboxes_event.wait(timeout=10)
+                check_label_text_and_drag(theme_pack, cfg.bboxes, 'Themes Pack')
+                cfg.bboxes_event.clear()
+                break
+        else:
+            if text_exists(cfg.img_src, r'.*主题卡包'):
+                cfg.bboxes_event.wait(timeout=10)
+                check_label_and_drag(cfg.bboxes, 'Themes Pack')
+                cfg.bboxes_event.clear()
 
     logger.info("结束Themes Pack界面检测")
 

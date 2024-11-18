@@ -1,13 +1,13 @@
-import yaml
 import argparse
 import json
 import os
+import sys
 from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional, Union, Callable, Dict, List
 
-import cerberus
+# import cerberus
 import jsonschema
 import toml
 import yaml
@@ -18,7 +18,10 @@ from pydantic import BaseModel, ValidationError
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 
-config_path = Path(__file__).resolve().parents[2]
+if getattr(sys, 'frozen', False):
+    config_path = Path(sys.argv[0]).resolve().parents[2]
+else:
+    config_path = Path(__file__).resolve().parents[2]
 
 DEFAULT_JSON_SCHEMA = {
     "type": "object",
@@ -541,106 +544,106 @@ class LengthValidator:
         return f"长度必须在 {self.min_length} 到 {self.max_length} 之间"
 
 
-class PydanticConfig(BaseModel):
-    pass  # 根据需要定义字段
-
-
-class MarshmallowConfig(Schema):
-    pass  # 根据需要定义字段
-
-
-class JSONSchemaValidator(ValidationPlugin):
-    """JSON Schema 校验器"""
-
-    def __init__(self, schema: dict):
-        self.schema = schema
-        self.error = None
-
-    def validate(self, data: dict) -> bool:
-        """使用 JSON Schema 校验数据"""
-        try:
-            jsonschema.validate(instance=data, schema=self.schema)
-            return True
-        except jsonschema.exceptions.ValidationError as e:
-            self.error = str(e)
-            return False
-
-    def get_error_message(self) -> str:
-        """获取 JSON Schema 校验错误信息"""
-        return self.error
-
-
-class CerberusValidator(ValidationPlugin):
-    """Cerberus 校验器"""
-
-    def __init__(self, schema: dict):
-        self.schema = schema
-        self.validator = cerberus.Validator(self.schema)
-
-    def validate(self, data: dict) -> bool:
-        """使用 Cerberus 校验数据"""
-        return self.validator.validate(data)
-
-    def get_error_message(self) -> str:
-        """获取 Cerberus 校验错误信息"""
-        return str(self.validator.errors)
-
-
-class PydanticValidator(ValidationPlugin):
-    """Pydantic 校验器"""
-
-    def __init__(self, model: type[BaseModel]):
-        self.model = model
-        self.error = None
-
-    def validate(self, data: dict) -> bool:
-        """使用 Pydantic 模型校验数据"""
-        try:
-            self.model.parse_obj(data)
-            return True
-        except ValidationError as e:
-            self.error = str(e)
-            return False
-
-    def get_error_message(self) -> str:
-        """获取 Pydantic 校验错误信息"""
-        return self.error
-
-
-class MarshmallowValidator(ValidationPlugin):
-    """Marshmallow 校验器"""
-
-    def __init__(self, schema: type[Schema]):
-        self.schema = schema
-        self.error = None
-
-    def validate(self, data: dict) -> bool:
-        """使用 Marshmallow Schema 校验数据"""
-        try:
-            self.schema().load(data)
-            return True
-        except MarshmallowValidationError as e:
-            self.error = str(e)
-            return False
-
-    def get_error_message(self) -> str:
-        """获取 Marshmallow 校验错误信息"""
-        return self.error
-
-
-json_schema_validator = JSONSchemaValidator(schema={
-    "type": "object",
-    "properties": {
-        "app": {
-            "type": "object",
-            "properties": {
-                "theme": {"type": "string", "enum": ["Light", "Dark"]},
-                "language": {"type": "string"},
-            },
-            "required": ["theme", "language"],
-        },
-    },
-    "required": ["app"],
-})
+# class PydanticConfig(BaseModel):
+#     pass  # 根据需要定义字段
+#
+#
+# class MarshmallowConfig(Schema):
+#     pass  # 根据需要定义字段
+#
+#
+# class JSONSchemaValidator(ValidationPlugin):
+#     """JSON Schema 校验器"""
+#
+#     def __init__(self, schema: dict):
+#         self.schema = schema
+#         self.error = None
+#
+#     def validate(self, data: dict) -> bool:
+#         """使用 JSON Schema 校验数据"""
+#         try:
+#             jsonschema.validate(instance=data, schema=self.schema)
+#             return True
+#         except jsonschema.exceptions.ValidationError as e:
+#             self.error = str(e)
+#             return False
+#
+#     def get_error_message(self) -> str:
+#         """获取 JSON Schema 校验错误信息"""
+#         return self.error
+#
+#
+# class CerberusValidator(ValidationPlugin):
+#     """Cerberus 校验器"""
+#
+#     def __init__(self, schema: dict):
+#         self.schema = schema
+#         self.validator = cerberus.Validator(self.schema)
+#
+#     def validate(self, data: dict) -> bool:
+#         """使用 Cerberus 校验数据"""
+#         return self.validator.validate(data)
+#
+#     def get_error_message(self) -> str:
+#         """获取 Cerberus 校验错误信息"""
+#         return str(self.validator.errors)
+#
+#
+# class PydanticValidator(ValidationPlugin):
+#     """Pydantic 校验器"""
+#
+#     def __init__(self, model: type[BaseModel]):
+#         self.model = model
+#         self.error = None
+#
+#     def validate(self, data: dict) -> bool:
+#         """使用 Pydantic 模型校验数据"""
+#         try:
+#             self.model.parse_obj(data)
+#             return True
+#         except ValidationError as e:
+#             self.error = str(e)
+#             return False
+#
+#     def get_error_message(self) -> str:
+#         """获取 Pydantic 校验错误信息"""
+#         return self.error
+#
+#
+# class MarshmallowValidator(ValidationPlugin):
+#     """Marshmallow 校验器"""
+#
+#     def __init__(self, schema: type[Schema]):
+#         self.schema = schema
+#         self.error = None
+#
+#     def validate(self, data: dict) -> bool:
+#         """使用 Marshmallow Schema 校验数据"""
+#         try:
+#             self.schema().load(data)
+#             return True
+#         except MarshmallowValidationError as e:
+#             self.error = str(e)
+#             return False
+#
+#     def get_error_message(self) -> str:
+#         """获取 Marshmallow 校验错误信息"""
+#         return self.error
+#
+#
+# json_schema_validator = JSONSchemaValidator(schema={
+#     "type": "object",
+#     "properties": {
+#         "app": {
+#             "type": "object",
+#             "properties": {
+#                 "theme": {"type": "string", "enum": ["Light", "Dark"]},
+#                 "language": {"type": "string"},
+#             },
+#             "required": ["theme", "language"],
+#         },
+#     },
+#     "required": ["app"],
+# })
 
 cfgm = ConfigManager(f"{config_path}/config/default.yaml")

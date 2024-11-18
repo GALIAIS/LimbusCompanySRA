@@ -8,9 +8,12 @@ from qfluentwidgets import (ScrollArea, Theme, qconfig, FluentIcon as FIF)
 
 from src.app.common.setting_card import PrimaryPushSettingCardX
 
-file_path = Path(__file__).resolve().parents[3]
-info_svg = Path(__file__).resolve().parents[2]
-sys.path.append(str(file_path))
+if getattr(sys, 'frozen', False):
+    BASE_DIR = Path(sys.argv[0]).resolve().parents[3]
+else:
+    BASE_DIR = Path(__file__).resolve().parents[3]
+
+sys.path.append(str(BASE_DIR))
 import main
 from src.app.common.style_sheet import StyleSheet
 

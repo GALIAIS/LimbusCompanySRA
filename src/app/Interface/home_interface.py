@@ -1,21 +1,20 @@
-import os
 import sys
 from pathlib import Path
-from PySide6.QtGui import QPixmap, QPainterPath, QPainter, QFont, Qt, QIcon
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QGraphicsDropShadowEffect, QScrollArea, QSizePolicy
 
-from PySide6.QtSvgWidgets import QSvgWidget
+from PySide6.QtGui import QPixmap, QPainterPath, QPainter, Qt
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QGraphicsDropShadowEffect
+from qfluentwidgets import ScrollArea, Theme, qconfig
 
-from PySide6.QtSvg import QSvgRenderer
-from qfluentwidgets import ScrollArea, Theme, qconfig, ElevatedCardWidget, ImageLabel, CaptionLabel
+if getattr(sys, 'frozen', False):
+    BASE_DIR = Path(sys.argv[0]).resolve().parents[3]
+else:
+    BASE_DIR = Path(__file__).resolve().parents[3]
 
-file_path = Path(__file__).resolve().parents[3]
-info_svg = Path(__file__).resolve().parents[2]
-sys.path.append(str(file_path))
+sys.path.append(str(BASE_DIR))
 
 from src.app.common.style_sheet import StyleSheet
 
-banner_path = file_path / 'src/assets/logo/limbus_banner.jpg'
+banner_path = BASE_DIR / 'src/assets/logo/limbus_banner.jpg'
 
 
 class HomeInterface(ScrollArea):

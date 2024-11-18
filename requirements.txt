@@ -5,7 +5,6 @@ toml~=0.10.2
 loguru~=0.7.2
 
 jsonschema~=4.23.0
-Cerberus~=1.3.5
 cryptography~=43.0.3
 pydantic~=2.9.2
 attrs~=24.2.0
@@ -19,10 +18,10 @@ PyWinCtl~=0.4.1
 opencv-python~=4.10.0.84
 mss~=10.0.0
 ultralytics~=8.3.31
-torch~=2.2.0
-torchvision~=0.17.0
 
 PyAutoGUI~=0.9.54
 paddleocr~=2.9.1
 
 bidict~=0.23.1
+
+pydirectinput-rgx

@@ -2,15 +2,18 @@ import sys
 from pathlib import Path
 
 from PySide6.QtGui import (Qt, QIntValidator)
-from PySide6.QtWidgets import (QWidget, QStackedWidget, QLineEdit, QDialog)
-
+from PySide6.QtWidgets import (QWidget, QStackedWidget, QLineEdit, QDialog, QCheckBox, QGridLayout, QComboBox, QSpinBox,
+                               QDialogButtonBox, QListWidget)
 from loguru import logger
 from qfluentwidgets import (ScrollArea, Theme, qconfig, SegmentedWidget, SettingCardGroup, FluentIcon as FIF,
                             MessageBoxBase)
 
-file_path = Path(__file__).resolve().parents[3]
-info_svg = Path(__file__).resolve().parents[2]
-sys.path.append(str(file_path))
+if getattr(sys, 'frozen', False):
+    BASE_DIR = Path(sys.argv[0]).resolve().parents[3]
+else:
+    BASE_DIR = Path(__file__).resolve().parents[3]
+
+sys.path.append(str(BASE_DIR))
 
 from src.app.common.style_sheet import StyleSheet
 from src.app.common.setting_card import *
@@ -49,6 +52,8 @@ class GameInterface(ScrollArea):
         self.Mirror_Dungeons_Group.addSettingCard(self.mirror_switch)
         self.Mirror_Dungeons_Group.addSettingCard(self.mirror_only_flag)
         self.Mirror_Dungeons_Group.addSettingCard(self.mirror_loop_count)
+        self.Mirror_Dungeons_Group.addSettingCard(self.theme_pack_choose)
+        self.Luxcavation_Group.addSettingCard(self.luxcavation_loop_count)
         self.Luxcavation_Group.addSettingCard(self.luxcavation_exp_switch)
         self.Luxcavation_Group.addSettingCard(self.luxcavation_exp_choose)
         self.Luxcavation_Group.addSettingCard(self.luxcavation_thread_switch)
@@ -83,8 +88,16 @@ class GameInterface(ScrollArea):
         self.mirror_loop_count = PushSettingCardX("修改", FIF.INFO, "镜牢循环次数",
                                                   f"{cfgm.get("Mirror_Dungeons.mirror_loop_count")}", None,
                                                   "Mirror_Dungeons.mirror_loop_count")
+        self.theme_pack_choose = PushSettingCardX("修改", FIF.INFO, "指定主题包",
+                                                  f"{cfgm.get("Mirror_Dungeons.theme_pack_choose")}", None,
+                                                  "Mirror_Dungeons.theme_pack_choose")
 
-        self.mirror_loop_count.clicked.connect(self.openLoopCountDialog)
+        self.mirror_loop_count.clicked.connect(
+            lambda: self.open_setting_dialog("Mirror_Dungeons.mirror_loop_count", self.mirror_loop_count,
+                                             "设置循环次数",
+                                             "请输入循环次数:", "LineEdit", validator=QIntValidator(1, 100)))
+        self.theme_pack_choose.clicked.connect(
+            lambda: self.open_theme_pack_dialog("Mirror_Dungeons.theme_pack_choose", self.theme_pack_choose))
 
         self.Luxcavation_Group = SettingCardGroup("Luxcavation设置", self.scrollWidget)
         self.luxcavation_exp_switch = SwitchSettingCardX(FIF.FLAG, "经验副本循环", "是否开启经验副本循环",
@@ -101,15 +114,78 @@ class GameInterface(ScrollArea):
                                                               ["傲慢", "嫉妒", "暴怒", "色欲",
                                                                "怠惰", "暴食", "忧郁"],
                                                               [1, 2, 3, 4, 5, 6, 7])
+        self.luxcavation_loop_count = PushSettingCardX("修改", FIF.INFO, "采光循环次数",
+                                                       f"{cfgm.get("Luxcavation.luxcavation_loop_count")}", None,
+                                                       "Luxcavation.luxcavation_loop_count")
 
-    def openLoopCountDialog(self):
-        initial_count = cfgm.get("Mirror_Dungeons.mirror_loop_count")
-        dialog = LoopCountDialog(initial_value=initial_count, parent=self.window())
+        self.luxcavation_loop_count.clicked.connect(
+            lambda: self.open_setting_dialog("Luxcavation.luxcavation_loop_count", self.luxcavation_loop_count,
+                                             "设置循环次数", "请输入循环次数:", "LineEdit",
+                                             validator=QIntValidator(1, 100)))
 
-        if dialog.exec() == QDialog.Accepted:
-            new_count = dialog.getLoopCount()
-            cfgm.set("Mirror_Dungeons.mirror_loop_count", int(new_count))
-            self.mirror_loop_count.setContent(f"{new_count}")
+    def open_setting_dialog(self, setting_key, setting_card, dialog_title, label_text, setting_type, **kwargs):
+        """打开设置对话框"""
+        initial_value = cfgm.get(setting_key)
+
+        if setting_type == "CheckBox" and isinstance(initial_value, str):
+            initial_value = bool(initial_value)
+
+        dialog = SettingDialog(dialog_title, parent=self.window())
+        dialog.addSetting(setting_type, label_text, setting_key, initial_value, **kwargs)
+
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            new_value = dialog.getSettingValue(setting_key)
+            if setting_type == "LineEdit":
+                cfgm.set(setting_key, int(new_value))
+                setting_card.setContent(f"{new_value}")
+            elif setting_type == "CheckBox":
+                cfgm.set(setting_key, new_value)
+                setting_card.setContent(f"{'启用' if new_value else '禁用'}")
+
+    def open_theme_pack_dialog(self, setting_key, setting_card):
+        available_packs = ["被遗忘者们", "无归属者", "身无分文的赌徒", "自动工厂", "无慈悲者", "钉与锤", "信仰与侵蚀",
+                           "无作为者",
+                           "巢，工坊，技术", "落花", "落泪者们", "无改变者", "湖的世界", "伏行深渊", "定义为恶",
+                           "宅邸的副产物",
+                           "某个世界", "地狱鸡", "去·海·边", "20区的奇迹", "肉斩骨断", "时间杀人时间", "WARP快车谋杀案",
+                           "紫罗兰的正午", "斩切者们", "当斩之物", "穿刺者们", "当刺之物", "破坏者们", "当碎之物",
+                           "压抑的愤怒",
+                           "解放的暴怒", "受情感压抑者", "沉迷的色欲", "捆缚的色欲", "因情感困惑者", "徒劳的怠惰",
+                           "停滞的怠惰",
+                           "待情感懒惰者", "吞噬的暴食", "漫溢的暴食", "对情感饥渴者", "堕落的忧郁", "沉溺的忧郁",
+                           "于情感沉溺者",
+                           "虚张声势的傲慢", "自以为是的傲慢", "向情感屈从者", "寒微的嫉妒", "可悲的嫉妒",
+                           "被情感评判者",
+                           "燃烧的摇曳", "盛火时节", "渗出的赤血", "尸山血海", "缭乱的波动", "异常地震带", "破坏性外力",
+                           "破竹之势",
+                           "沉于苦痛", "沉沦泛滥", "一声叹息", "循环呼吸", "动力渐盈", "电闪雷鸣"]
+
+        selected_packs = cfgm.get(setting_key) or []
+
+        dialog = MultiSelectDialog("选择主题包", available_packs, selected_packs, parent=self.window())
+
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            selected_packs = dialog.getSelectedItems()
+            cfgm.set(setting_key, selected_packs)
+            setting_card.setContent(", ".join(selected_packs))
+
+    # def openMirrorLoopCountDialog(self):
+    #     initial_count = cfgm.get("Mirror_Dungeons.mirror_loop_count")
+    #     dialog = LoopCountDialog(initial_value=initial_count, parent=self.window())
+    #
+    #     if dialog.exec() == QDialog.Accepted:
+    #         new_count = dialog.getLoopCount()
+    #         cfgm.set("Mirror_Dungeons.mirror_loop_count", int(new_count))
+    #         self.mirror_loop_count.setContent(f"{new_count}")
+    #
+    # def openLuxcavationLoopCountDialog(self):
+    #     initial_count = cfgm.get("Luxcavation.luxcavation_loop_count")
+    #     dialog = LoopCountDialog(initial_value=initial_count, parent=self.window())
+    #
+    #     if dialog.exec() == QDialog.Accepted:
+    #         new_count = dialog.getLoopCount()
+    #         cfgm.set("Luxcavation.luxcavation_loop_count", int(new_count))
+    #         self.luxcavation_loop_count.setContent(f"{new_count}")
 
     def addSubInterface(self, widget: QLabel, objectName: str, text: str):
         existing_widget = self.findChild(QLabel, objectName)
@@ -133,31 +209,114 @@ class GameInterface(ScrollArea):
             self.segmented.setCurrentItem(widget.objectName())
 
 
-class LoopCountDialog(MessageBoxBase):
-    def __init__(self, initial_value, parent=None):
+class SettingDialog(QDialog):
+    """高度可复用和可定制的设置对话框"""
+
+    def __init__(self, title="设置", parent=None):
         super().__init__(parent=parent)
+        self.setWindowTitle(title)
 
-        self.initial_value = initial_value
+        self.gridLayout = QGridLayout()
+        self.setLayout(self.gridLayout)
 
-        self.setWindowTitle("设置循环次数")
+        self.settings = {}
 
-        self.titleLabel = QLabel("请输入循环次数:", self)
-        self.loopCountInput = QLineEdit(self)
-        self.loopCountInput.setText(str(initial_value))
+        self.buttonBox = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        self.buttonBox.accepted.connect(self.accept)
+        self.buttonBox.rejected.connect(self.reject)
+        self.gridLayout.addWidget(self.buttonBox, 100, 0, 1, 2)
 
-        self.loopCountInput.setValidator(QIntValidator(1, 100, self))
+    def addSetting(self, setting_type, label_text, key, initial_value=None, **kwargs):
+        """添加设置项"""
+        row = len(self.settings)
 
-        self.viewLayout.addWidget(self.titleLabel)
-        self.viewLayout.addWidget(self.loopCountInput)
+        label = QLabel(label_text, self)
+        self.gridLayout.addWidget(label, row, 0, Qt.AlignmentFlag.AlignLeft)
 
-        self.widget.setMinimumWidth(350)
-        self.loopCountInput.setFixedHeight(30)
+        if setting_type == "LineEdit":
+            widget = QLineEdit(self)
+            if initial_value is not None:
+                widget.setText(str(initial_value))
+            if "validator" in kwargs:
+                widget.setValidator(kwargs["validator"])
+        elif setting_type == "CheckBox":
+            widget = QCheckBox(self)
+            if initial_value is not None:
+                widget.setChecked(initial_value)
+        elif setting_type == "ComboBox":
+            widget = QComboBox(self)
+            if "items" in kwargs:
+                widget.addItems(kwargs["items"])
+            if initial_value is not None:
+                widget.setCurrentText(initial_value)
+        elif setting_type == "SpinBox":
+            widget = QSpinBox(self)
+            if "min" in kwargs:
+                widget.setMinimum(kwargs["min"])
+            if "max" in kwargs:
+                widget.setMaximum(kwargs["max"])
+            if initial_value is not None:
+                widget.setValue(initial_value)
+        else:
+            raise ValueError(f"不支持的设置类型: {setting_type}")
+
+        self.gridLayout.addWidget(widget, row, 1, Qt.AlignmentFlag.AlignLeft)
+        self.settings[key] = widget
+
+    def getSettingValue(self, key):
+        """获取设置项的值"""
+        widget = self.settings.get(key)
+        if widget is None:
+            return None
+
+        if isinstance(widget, QLineEdit):
+            return widget.text()
+        elif isinstance(widget, QCheckBox):
+            return widget.isChecked()
+        elif isinstance(widget, QComboBox):
+            return widget.currentText()
+        elif isinstance(widget, QSpinBox):
+            return widget.value()
+        else:
+            raise TypeError(f"不支持的控件类型: {type(widget)}")
 
     def validate(self):
-        if self.loopCountInput.text().isdigit():
-            return True
-        logger.warning("循环次数输入无效，请输入有效整数。")
-        return False
+        """验证所有设置项"""
+        for key, widget in self.settings.items():
+            if isinstance(widget, QLineEdit) and not widget.text().isdigit():
+                logger.warning(f"{key} 输入无效，请输入有效整数。")
+                return False
+        return True
 
-    def getLoopCount(self):
-        return int(self.loopCountInput.text())
+
+class MultiSelectDialog(QDialog):
+    """多选对话框"""
+
+    def __init__(self, title, items, selected_items=None, parent=None):
+        super().__init__(parent=parent)
+        self.setWindowTitle(title)
+
+        self.items = items
+        self.selected_items = selected_items or []
+
+        self.list_widget = QListWidget(self)
+        self.list_widget.setSelectionMode(QListWidget.SelectionMode.MultiSelection)
+        for item in self.items:
+            self.list_widget.addItem(item)
+
+        # 选中已选择的项目
+        for i in range(self.list_widget.count()):
+            item = self.list_widget.item(i)
+            if item.text() in self.selected_items:
+                item.setSelected(True)
+
+        self.ok_button = QPushButton("确定", self)
+        self.ok_button.clicked.connect(self.accept)
+
+        layout = QVBoxLayout(self)
+        layout.addWidget(self.list_widget)
+        layout.addWidget(self.ok_button)
+
+    def getSelectedItems(self):
+        """获取选中的项目"""
+        return [item.text() for item in self.list_widget.selectedItems()]

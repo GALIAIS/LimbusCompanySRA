@@ -1,6 +1,6 @@
-from PySide6.QtWidgets import QDialog, QHBoxLayout, QFrame, QWidget, QGraphicsDropShadowEffect, QGraphicsOpacityEffect
 from PySide6.QtCore import Qt, QEasingCurve, QPropertyAnimation, QEvent
 from PySide6.QtGui import QColor
+from PySide6.QtWidgets import QDialog, QHBoxLayout, QFrame, QWidget, QGraphicsDropShadowEffect, QGraphicsOpacityEffect
 
 
 class MaskDialogBaseX(QDialog):

@@ -1,14 +1,19 @@
-import subprocess
-import os
-import sys
 import logging
-from pathlib import Path
-import requests
+import subprocess
+import sys
 import threading
+from pathlib import Path
+
+import requests
 from tqdm import tqdm
 
-root_path = Path(__file__).resolve().parents[2]
-sys.path.append(str(Path(__file__).resolve().parents[2]))
+if getattr(sys, 'frozen', False):
+    root_path = Path(sys.argv[0]).resolve().parents[2]
+else:
+    root_path = Path(__file__).resolve().parents[2]
+
+sys.path.append(str(root_path))
+
 from src.app.utils.ConfigManager import cfgm
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')

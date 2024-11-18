@@ -35,23 +35,27 @@ Labels_ID = bidict({
     "Inactive Button": 31.0,
     "Leava": 32.0,
     "Luxcavation": 33.0,
-    "Mailbox": 34.0,
-    "Mirror Dungeon": 35.0,
-    "Refresh": 36.0,
-    "Resume": 37.0,
-    "Safe Node": 38.0,
-    "Settings": 39.0,
-    "Sinner": 40.0,
-    "Skip": 41.0,
-    "Start": 42.0,
-    "Start Node": 43.0,
-    "Themes Pack": 44.0,
-    "Therter": 45.0,
-    "Thread": 46.0,
-    "Unavailable Node": 47.0,
-    "Win Rate": 48.0,
-    "Window": 49.0,
-    "Pause": 50.0
+    "Luxcavation-EXP": 34.0,
+    "Luxcavation-Thread": 35.0,
+    "Mailbox": 36.0,
+    "Maximum": 37.0,
+    "Minimum": 38.0,
+    "Mirror Dungeon": 39.0,
+    "Refresh": 40.0,
+    "Resume": 41.0,
+    "Safe Node": 42.0,
+    "Settings": 43.0,
+    "Sinner": 44.0,
+    "Skip": 45.0,
+    "Start": 46.0,
+    "Start Node": 47.0,
+    "Themes Pack": 48.0,
+    "Therter": 49.0,
+    "Thread": 50.0,
+    "Unavailable Node": 51.0,
+    "Win Rate": 52.0,
+    "Window": 53.0,
+    "Pause": 54.0
 })
 
 COLORS = [
@@ -67,7 +71,8 @@ COLORS = [
     (128, 0, 128), (255, 165, 0), (128, 128, 0), (192, 192, 192), (255, 20, 147), (210, 180, 140),
     (34, 139, 34), (255, 99, 71), (75, 0, 130), (255, 228, 225), (255, 228, 181), (153, 50, 204),
     (139, 69, 19), (255, 127, 80), (240, 230, 140), (245, 222, 179), (0, 100, 0), (205, 92, 92),
-    (135, 206, 250), (255, 240, 245), (218, 112, 214), (240, 128, 128), (255, 239, 196), (0, 255, 127), (176, 84, 222)
+    (135, 206, 250), (255, 240, 245), (218, 112, 214), (240, 128, 128), (255, 239, 196), (0, 255, 127), (146, 20, 222),
+    (73, 156, 215), (146, 255, 17), (255, 105, 52), (20, 155, 125)
 ]
 
 LABELS = [
@@ -77,7 +82,9 @@ LABELS = [
     "E.G.O", "E.G.O Gift", "EXP", "Encounter Reward Card", "End Node",
     "Enemy", "Enkephalin", "Enter", "Event Node", "Event Option",
     "Explored Node", "Extract", "Give Up", "Halt Exploration", "Heal Sinner",
-    "Inactive Button", "Leava", "Luxcavation", "Mailbox", "Mirror Dungeon",
+    "Inactive Button", "Leava", "Luxcavation", "Luxcavation-EXP",
+    "Luxcavation-Thread", "Mailbox", "Maximum",
+    "Minimum", "Mirror Dungeon",
     "Refresh", "Resume", "Safe Node", "Settings", "Sinner", "Skip", "Start",
     "Start Node", "Themes Pack", "Therter", "Thread", "Unavailable Node",
     "Win Rate", "Window", "Pause"

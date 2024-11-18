@@ -1,12 +1,8 @@
-import re
 import os
+import re
 import sys
 import winreg
-from pathlib import Path
 from typing import Optional
-
-file_path = Path(__file__).resolve().parents[3]
-info_svg = Path(__file__).resolve().parents[2]
 
 
 def find_python(self, directory: str) -> Optional[str]:

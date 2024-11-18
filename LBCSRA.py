@@ -2,8 +2,14 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+from src.app.utils.ConfigManager import cfgm
 
-sys.path.append('.')
+if getattr(sys, 'frozen', False):
+    BASE_DIR = Path(sys.argv[0]).resolve().parent
+else:
+    BASE_DIR = Path(os.path.abspath("."))
+
+sys.path.append(str(BASE_DIR))
 from PySide6.QtCore import QSize, QEventLoop, QTimer
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication
@@ -33,8 +39,8 @@ class MainWindow(MSFluentWindow):
         self.titleBar.setDoubleClickEnabled(False)
         self.setMicaEffectEnabled(False)
 
-        icon_path = "src/assets/logo/LimbusCompany.png"
-        window_icon = QIcon(icon_path)
+        icon_path = BASE_DIR / "src" / "assets" / "logo" / "LimbusCompany.png"
+        window_icon = QIcon(str(icon_path))
         self.setWindowIcon(window_icon)
         self.setWindowTitle("LimbusCompanySRA")
 
