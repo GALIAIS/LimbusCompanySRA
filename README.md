@@ -2,7 +2,7 @@
 
 # LimbusCompanySRA
 
-为《Limbus Company》设计的自动化脚本，提供 OCR 识别、目标检测、自动点击等多种功能，帮助玩家优化游戏体验。
+为 ##Limbus Company## 设计的自动化脚本，提供 OCR 识别、目标检测、自动点击等多种功能，帮助玩家优化游戏体验。
 
 ---
 
