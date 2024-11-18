@@ -54,7 +54,6 @@ def find_limbus(self, directory: str) -> Optional[str]:
 
 
 def get_installed_steam_games():
-    """获取所有通过 Steam 安装的游戏路径"""
     games = {}
 
     reg_paths = [

@@ -40,7 +40,6 @@ class SettingInterface(QScrollArea):
         StyleSheet.GAME_INTERFACE.apply(self, theme)
 
     def initLayout(self):
-        """初始化布局"""
         self.vBoxLayout.addLayout(self.v2BoxLayout)
         self.vBoxLayout.setContentsMargins(30, 20, 30, 30)
         self.vBoxLayout.setSpacing(25)

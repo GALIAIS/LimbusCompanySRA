@@ -14,7 +14,6 @@ sys.path.append(str(BASE_DIR))
 
 
 class Config(QConfig):
-    # 游戏设置
     auto_exchange_enkephalin = ConfigItem(
         group="Game",
         name="exchange_Enkephalin",

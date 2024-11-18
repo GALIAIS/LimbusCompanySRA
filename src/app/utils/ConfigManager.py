@@ -32,7 +32,6 @@ DEFAULT_CERBERUS_SCHEMA = {}
 
 
 class ValidationPlugin:
-    """校验器插件基类"""
 
     def validate(self, data: dict) -> bool:
         """校验数据
@@ -46,12 +45,10 @@ class ValidationPlugin:
         raise NotImplementedError
 
     def get_error_message(self) -> str:
-        """获取错误信息"""
         raise NotImplementedError
 
 
 class FileHandler(FileSystemEventHandler):
-    """文件处理类，支持 YAML 和 JSON 文件，并负责文件夹的自动创建和文件监听"""
 
     def __init__(self, file_path: str, backup=False, encryption_key: Optional[bytes] = None,
                  validators: Optional[Dict[str, ValidationPlugin]] = None,
@@ -71,7 +68,6 @@ class FileHandler(FileSystemEventHandler):
         self.observer.start()
 
     def set_file_path(self, file_path: str):
-        """设置新文件路径并确保目录存在"""
         try:
             self.file_path = Path(file_path)
             self._ensure_directory()
@@ -81,7 +77,6 @@ class FileHandler(FileSystemEventHandler):
             raise
 
     def _ensure_directory(self):
-        """确保文件夹路径存在"""
         try:
             self.file_path.parent.mkdir(parents=True, exist_ok=True)
         except OSError as e:
@@ -89,13 +84,11 @@ class FileHandler(FileSystemEventHandler):
             raise
 
     def on_modified(self, event):
-        """监听文件修改事件"""
         if not event.is_directory and event.src_path == str(self.file_path):
             # logger.info(f"检测到配置文件修改: {self.file_path}")
             self.load()
 
     def load(self, enable_validation=False) -> Union[dict, list]:
-        """加载数据，根据文件扩展名支持 YAML 和 JSON，并进行校验"""
         try:
             if not self.file_path.exists():
                 logger.warning(f"文件不存在：{self.file_path}")
@@ -141,12 +134,10 @@ class FileHandler(FileSystemEventHandler):
             raise
 
     def trigger_backup(self):
-        """手动触发备份"""
         self._create_backup()
         logger.info("手动触发备份完成")
 
     def save(self, data: Union[dict, list]):
-        """保存数据，并可选创建备份"""
         try:
             self._ensure_directory()
             if self.backup:
@@ -174,7 +165,6 @@ class FileHandler(FileSystemEventHandler):
             raise
 
     def _create_backup(self):
-        """创建备份文件"""
         try:
             if self.file_path.exists():
                 now = datetime.now()
@@ -205,7 +195,6 @@ class FileHandler(FileSystemEventHandler):
 
 
 class ConfigData:
-    """配置数据管理类"""
 
     def __init__(self, initial_data: Optional[Union[dict, list]] = None):
         self.data = initial_data or {}
@@ -215,7 +204,6 @@ class ConfigData:
         self.history: Dict[str, List[Any]] = {}
 
     def get(self, key: str, default: Any = None) -> Any:
-        """获取嵌套配置项"""
         keys = key.split('.')
         value = self.data
         for k in keys:
@@ -233,7 +221,6 @@ class ConfigData:
         return value
 
     def set(self, key: str, value: Any, description: Optional[str] = None):
-        """设置嵌套配置项"""
         old_value = self.get(key)
         self._save_history(key, old_value)
         keys = key.split('.')
@@ -274,17 +261,14 @@ class ConfigData:
             self.descriptions[key] = description
 
     def _save_history(self, key: str, value: Any):
-        """保存配置项的历史记录"""
         if key not in self.history:
             self.history[key] = []
         self.history[key].append(value)
 
     def get_history(self, key: str) -> List[Any]:
-        """获取配置项的历史记录"""
         return self.history.get(key, [])
 
     def update(self, new_data: Union[dict, list]):
-        """递归更新配置项"""
 
         def recursive_update(d, u):
             if isinstance(u, dict):
@@ -309,16 +293,13 @@ class ConfigData:
         recursive_update(self.data, new_data)
 
     def reset(self):
-        """重置配置数据"""
         self.data.clear()
         self._notify_change(None, None)
 
     def get_data(self) -> Union[dict, list]:
-        """获取完整数据"""
         return deepcopy(self.data)
 
     def delete(self, key: str):
-        """删除配置项"""
         keys = key.split('.')
         data = self.data
         for k in keys[:-1]:
@@ -351,29 +332,23 @@ class ConfigData:
                 pass
 
     def exists(self, key: str) -> bool:
-        """检查配置项是否存在"""
         return self.get(key) is not None
 
     def on_changed(self, callback: Callable[[str, Any], None]):
-        """注册配置变更回调函数"""
         self.on_changed_callbacks.append(callback)
 
     def _notify_change(self, key: str, value: Any):
-        """通知配置变更"""
         for callback in self.on_changed_callbacks:
             callback(key, value)
 
     def get_description(self, key: str) -> Optional[str]:
-        """获取配置项描述"""
         return self.descriptions.get(key)
 
     def add_validator(self, key: str, validator: Callable[[Any], bool]):
-        """添加自定义校验器"""
         self.validators[key] = validator
 
 
 class ConfigManager:
-    """配置管理类，协调 FileHandler 和 ConfigData"""
 
     def __init__(self, file_path: str, backup=False, encryption_key: Optional[bytes] = None,
                  validators: Optional[Dict[str, ValidationPlugin]] = None,
@@ -396,7 +371,6 @@ class ConfigManager:
         self._parse_args()
 
     def _parse_args(self):
-        """解析命令行参数"""
         parser = argparse.ArgumentParser()
         parser.add_argument('--set', action='append', nargs=2, metavar=('key', 'value'),
                             help='设置配置项，格式为 key=value')
@@ -410,25 +384,21 @@ class ConfigManager:
                     logger.error(f"设置命令行参数 {key}={value} 时出错：{e}")
 
     def load(self):
-        """重新加载配置"""
         self.config_data = ConfigData(self.file_handler.load())
         logger.info("配置已重新加载")
 
     def save(self):
-        """保存当前配置"""
         self.version_history.append(self.config_data.get_data())
         if len(self.version_history) > self.version_history_limit:
             self.version_history.pop(0)
         self.file_handler.save(self.config_data.get_data())
 
     def get(self, key: str, default: Any = False) -> Any:
-        """外部接口获取配置项，优先从环境变量获取"""
         env_var = f"APP_{key.upper().replace('.', '_')}"
         return os.environ.get(env_var) or self.config_data.get(key) or self.default_values.get(key, default)
 
     def set(self, key: str, value: Any, save: bool = True, description: Optional[str] = None,
             allowed_roles: Optional[List[str]] = None):
-        """外部接口设置配置项，支持权限控制"""
         if allowed_roles:
             self.role_permissions[key] = allowed_roles
         if allowed_roles and not any(role in self.user_roles for role in allowed_roles):
@@ -438,53 +408,43 @@ class ConfigManager:
             self.save()
 
     def update(self, new_data: Union[dict, list], save: bool = True):
-        """外部接口批量更新配置项"""
         self.config_data.update(new_data)
         if save or (save is None and self.auto_save):
             self.save()
 
     def reset(self, save: bool = True):
-        """重置配置并可选立即保存"""
         self.config_data.reset()
         if save or (save is None and self.auto_save):
             self.save()
 
     def set_config_file(self, file_path: str, load_immediately: bool = True):
-        """切换配置文件并重新加载（可选）"""
         self.file_handler.set_file_path(file_path)
         if load_immediately:
             self.load()
 
     def delete(self, key: str, save: bool = True):
-        """删除配置项"""
         self.config_data.delete(key)
         if save or (save is None and self.auto_save):
             self.save()
 
     def exists(self, key: str) -> bool:
-        """检查配置项是否存在"""
         return self.config_data.exists(key)
 
     def validate(self):
-        """手动触发配置文件校验"""
         self.file_handler.load(enable_validation=True)
 
     def apply_validation_hook(self):
-        """应用自定义校验钩子"""
         if self.validation_hook:
             self.validation_hook(self.config_data.get_data())
 
     def on_config_changed(self, callback: Callable[[str, Any], None]):
-        """注册配置变更回调函数"""
         self.config_change_callbacks.append(callback)
 
     def _notify_config_change(self, key: str, value: Any):
-        """通知配置变更"""
         for callback in self.config_change_callbacks:
             callback(key, value)
 
     def rollback(self, version: int):
-        """回滚到指定版本"""
         if 0 <= version < len(self.version_history):
             self.config_data = ConfigData(self.version_history[version])
             self.save()
@@ -492,11 +452,9 @@ class ConfigManager:
             raise ValueError(f"无效的版本号：{version}")
 
     def trigger_backup(self):
-        """手动触发配置备份"""
         self.file_handler.trigger_backup()
 
     def export(self, file_path: str, file_format: str = 'yaml'):
-        """导出配置到文件"""
         data = self.config_data.get_data()
         if file_format == 'yaml':
             with open(file_path, 'w', encoding='utf-8') as f:
@@ -511,7 +469,6 @@ class ConfigManager:
             raise ValueError(f"不支持的文件格式：{file_format}")
 
     def import_from_file(self, file_path: str, file_format: str = 'yaml'):
-        """从文件导入配置"""
         if file_format == 'yaml':
             with open(file_path, 'r', encoding='utf-8') as f:
                 data = yaml.safe_load(f)
@@ -524,7 +481,6 @@ class ConfigManager:
         self.save()
 
     def get_description(self, key: str) -> Optional[str]:
-        """获取配置项描述"""
         return self.config_data.get_description(key)
 
     def add_validator(self, key: str, validator: Callable[[Any], bool]):
