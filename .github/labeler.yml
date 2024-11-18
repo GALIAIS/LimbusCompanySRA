@@ -1,0 +1,12 @@
+pull_request:
+  paths:
+    - src/**: code
+    - docs/**: documentation
+    - tests/**: tests
+    - *.md: markdown
+    - package.json: dependencies
+    - config/**: configuration
+    - assets/**: assets
+
+  default:
+    - unclassified
