@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
+from attrs import define
+from loguru import logger
 
-# from src.common.utils import *
-import src.common.config as cfg
-from src.app.utils.ConfigManager import *
+from src.app.utils.ConfigManager import cfgm
 from src.common.actions import *
+from src.common.utils import *
 
 
 @define
@@ -320,4 +321,4 @@ class Mirror_Wuthering:
     #             return_to_main_menu()
 
 
-mirror_dungeon = Mirror_Wuthering()
+mw = Mirror_Wuthering()

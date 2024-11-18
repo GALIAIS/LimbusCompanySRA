@@ -1,61 +1,6 @@
 from src.common.utils import *
 from src.app.utils.ConfigManager import cfgm
-from src.script.Mirror_Dungeon import mirror_dungeon
 from src.script.Luxcavation import luxcavation
-
-
-def run():
-    current_count: int = 1
-    mirror_switch: bool = cfgm.get("Mirror_Dungeons.mirror_switch")
-
-    """循环执行镜牢4流程"""
-    for _ in range(int(cfgm.get("Mirror_Dungeons.mirror_loop_count"))):
-        if not mirror_switch:
-            logger.info("镜牢4流程未开启")
-            break
-        try:
-            logger.info(f"开始执行镜牢4流程")
-            mirror_pass_flag = False
-            mirror_dungeon.start_mirror_wuthering()
-            current_count += 1
-            logger.info(f"已完成第 {current_count} 次镜牢4")
-            logger.info(f"即将进入第 {current_count + 1} 次镜牢4")
-        except Exception as e:
-            logger.error(f"镜牢4流程出错: {e}")
-            logger.info("尝试回到主界面...")
-            return_to_main_menu()
-
-    for _ in range(int(cfgm.get("Luxcavation.luxcavation_loop_count"))):
-        if not cfgm.get("Luxcavation.exp_switch"):
-            logger.info("EXP副本流程未开启")
-            break
-        try:
-            logger.info(f"开始执行EXP副本流程")
-            exp_pass_flag = False
-            luxcavation.Luxcavation_EXP()
-            current_count += 1
-            logger.info(f"已完成第 {current_count} 次EXP副本")
-            logger.info(f"即将进入第 {current_count + 1} 次EXP副本")
-        except Exception as e:
-            logger.error(f"EXP副本流程出错: {e}")
-            logger.info("尝试回到主界面...")
-            return_to_main_menu()
-
-    for _ in range(int(cfgm.get("Luxcavation.luxcavation_loop_count"))):
-        if not cfgm.get("Luxcavation.thread_switch"):
-            logger.info("Thread副本流程未开启")
-            break
-        try:
-            logger.info(f"开始执行Thread副本流程")
-            thread_pass_flag = False
-            luxcavation.Luxcavation_Thread()
-            current_count += 1
-            logger.info(f"已完成第 {current_count} 次Thread副本")
-            logger.info(f"即将进入第 {current_count + 1} 次Thread副本")
-        except Exception as e:
-            logger.error(f"Thread副本流程出错: {e}")
-            logger.info("尝试回到主界面...")
-            return_to_main_menu()
 
 
 def navigate_to_luxcavation():
@@ -176,7 +121,6 @@ def choose_random_ego_gift():
     """随机选择E.G.O饰品"""
     logger.info("随机E.G.O饰品选择")
     cfg.img_event.wait(timeout=10)
-    print(text_exists(cfg.img_src, r'选择.+饰品'), text_exists(cfg.img_src, r'获得.+饰品.*'))
     while text_exists(cfg.img_src, r'选择.+饰品') and not text_exists(cfg.img_src, r'获得.+饰品.*'):
         cfg.img_event.clear()
 
@@ -691,3 +635,58 @@ def server_error():
         check_text_and_clickR('重试')
         check_text_and_click('重试')
         cfg.img_event.clear()
+
+
+def run():
+    current_count: int = 1
+    mirror_switch: bool = cfgm.get("Mirror_Dungeons.mirror_switch")
+
+    """循环执行镜牢4流程"""
+    for _ in range(int(cfgm.get("Mirror_Dungeons.mirror_loop_count"))):
+        if not mirror_switch:
+            logger.info("镜牢4流程未开启")
+            break
+        try:
+            from src.script.Mirror_Dungeon import mw
+            logger.info(f"开始执行镜牢4流程")
+            mirror_pass_flag = False
+            mw.start_mirror_wuthering()
+            current_count += 1
+            logger.info(f"已完成第 {current_count} 次镜牢4")
+            logger.info(f"即将进入第 {current_count + 1} 次镜牢4")
+        except Exception as e:
+            logger.error(f"镜牢4流程出错: {e}")
+            logger.info("尝试回到主界面...")
+            return_to_main_menu()
+
+    for _ in range(int(cfgm.get("Luxcavation.luxcavation_loop_count"))):
+        if not cfgm.get("Luxcavation.exp_switch"):
+            logger.info("EXP副本流程未开启")
+            break
+        try:
+            logger.info(f"开始执行EXP副本流程")
+            exp_pass_flag = False
+            luxcavation.Luxcavation_EXP()
+            current_count += 1
+            logger.info(f"已完成第 {current_count} 次EXP副本")
+            logger.info(f"即将进入第 {current_count + 1} 次EXP副本")
+        except Exception as e:
+            logger.error(f"EXP副本流程出错: {e}")
+            logger.info("尝试回到主界面...")
+            return_to_main_menu()
+
+    for _ in range(int(cfgm.get("Luxcavation.luxcavation_loop_count"))):
+        if not cfgm.get("Luxcavation.thread_switch"):
+            logger.info("Thread副本流程未开启")
+            break
+        try:
+            logger.info(f"开始执行Thread副本流程")
+            thread_pass_flag = False
+            luxcavation.Luxcavation_Thread()
+            current_count += 1
+            logger.info(f"已完成第 {current_count} 次Thread副本")
+            logger.info(f"即将进入第 {current_count + 1} 次Thread副本")
+        except Exception as e:
+            logger.error(f"Thread副本流程出错: {e}")
+            logger.info("尝试回到主界面...")
+            return_to_main_menu()
