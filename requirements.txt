@@ -21,4 +21,5 @@ paddlepaddle-gpu
 bidict~=0.23.1
 pydirectinput-rgx
 PyAutoGUI-ng
+pywin32
 PySide6-Fluent-Widgets[full]
