@@ -21,6 +21,7 @@ ultralytics~=8.3.31
 
 PyAutoGUI~=0.9.54
 paddleocr~=2.9.1
+paddlepaddle-gpu
 
 bidict~=0.23.1
 
