@@ -44,105 +44,92 @@ class Mirror_Wuthering:
 
         while not self.mirror_pass_flag:
             logger.trace("开始镜牢4循环")
-            retry_count = 0
             start_time = time.time()
 
-            while retry_count < MAX_RETRIES:
-                match True:
-                    case _ if self.is_themes_pack_chosen():
-                        logger.trace("Themes Pack选择")
-                        choose_themes_pack()
-                        retry_count += 1
-                        if time.time() - start_time > TIMEOUT:
-                            logger.warning("[选择主题包]超时，重新启动流程...")
-                            break
+            match True:
+                case _ if self.is_themes_pack_chosen():
+                    logger.trace("Themes Pack选择")
+                    choose_themes_pack()
+                    if time.time() - start_time > TIMEOUT:
+                        logger.warning("[选择主题包]超时，重新启动流程...")
+                        break
 
-                    case _ if self.is_ego_gift_chosen():
-                        logger.trace("选择E.G.O饰品")
-                        choose_ego_gift()
-                        confirm_ego_gift_info()
-                        other_event()
-                        retry_count += 1
-                        if time.time() - start_time > TIMEOUT:
-                            logger.warning("[选择E.G.O赠品]超时，重新启动流程...")
-                            break
+                case _ if self.is_ego_gift_chosen():
+                    logger.trace("选择E.G.O饰品")
+                    choose_ego_gift()
+                    confirm_ego_gift_info()
+                    other_event()
+                    if time.time() - start_time > TIMEOUT:
+                        logger.warning("[选择E.G.O赠品]超时，重新启动流程...")
+                        break
 
-                    case _ if self.is_encounter_reward():
-                        logger.trace("选择遭遇战奖励卡")
-                        choose_encounter_reward_card()
-                        retry_count += 1
-                        if time.time() - start_time > TIMEOUT:
-                            logger.warning("[遭遇战奖励]超时，重新启动流程...")
-                            break
+                case _ if self.is_encounter_reward():
+                    logger.trace("选择遭遇战奖励卡")
+                    choose_encounter_reward_card()
+                    if time.time() - start_time > TIMEOUT:
+                        logger.warning("[遭遇战奖励]超时，重新启动流程...")
+                        break
 
-                    case _ if self.is_path_chosen():
-                        logger.trace("开始路径选择...")
-                        choose_path()
-                        enter_event()
-                        retry_count += 1
-                        if time.time() - start_time > TIMEOUT:
-                            logger.warning("[选择路径]超时，重新启动流程...")
-                            break
+                case _ if self.is_path_chosen():
+                    logger.trace("开始路径选择...")
+                    choose_path()
+                    enter_event()
+                    if time.time() - start_time > TIMEOUT:
+                        logger.warning("[选择路径]超时，重新启动流程...")
+                        break
 
-                    case _ if self.is_shop():
-                        logger.trace("进入商店界面")
-                        shop_buy()
-                        retry_count += 1
-                        if time.time() - start_time > TIMEOUT:
-                            logger.warning("[商店交易]超时，重新启动流程...")
-                            break
+                case _ if self.is_shop():
+                    logger.trace("进入商店界面")
+                    shop_buy()
+                    if time.time() - start_time > TIMEOUT:
+                        logger.warning("[商店交易]超时，重新启动流程...")
+                        break
 
-                    case _ if self.is_battle_interface():
-                        logger.trace("进入事件界面")
-                        enter_event()
-                        battle_choose_characters()
-                        retry_count += 1
-                        if time.time() - start_time > TIMEOUT:
-                            logger.warning("[进入事件]超时，重新启动流程...")
-                            break
+                case _ if self.is_battle_interface():
+                    logger.trace("进入事件界面")
+                    enter_event()
+                    battle_choose_characters()
+                    if time.time() - start_time > TIMEOUT:
+                        logger.warning("[进入事件]超时，重新启动流程...")
+                        break
 
-                    case _ if self.is_in_battle():
-                        logger.trace("开始战斗流程")
-                        start_battle()
-                        retry_count += 1
-                        if time.time() - start_time > TIMEOUT:
-                            logger.warning("[战斗]超时，重新启动流程...")
-                            break
+                case _ if self.is_in_battle():
+                    logger.trace("开始战斗流程")
+                    start_battle()
+                    if time.time() - start_time > TIMEOUT:
+                        logger.warning("[战斗]超时，重新启动流程...")
+                        break
 
-                    case _ if self.is_abnormality_encounter():
-                        logger.trace("开始处理异想体遭遇事件")
-                        abnormality_encounters_event()
-                        retry_count += 1
-                        if time.time() - start_time > TIMEOUT:
-                            logger.warning("[处理异常遭遇]超时，重新启动流程...")
-                            break
+                case _ if self.is_abnormality_encounter():
+                    logger.trace("开始处理异想体遭遇事件")
+                    abnormality_encounters_event()
+                    if time.time() - start_time > TIMEOUT:
+                        logger.warning("[处理异常遭遇]超时，重新启动流程...")
+                        break
 
-                    case _ if self.is_server_error():
-                        logger.trace("服务器异常处理")
-                        server_error()
-                        retry_count += 1
-                        if time.time() - start_time > TIMEOUT:
-                            logger.warning("[服务器异常]超时，重新启动流程...")
-                            break
+                case _ if self.is_server_error():
+                    logger.trace("服务器异常处理")
+                    server_error()
+                    if time.time() - start_time > TIMEOUT:
+                        logger.warning("[服务器异常]超时，重新启动流程...")
+                        break
 
-                    case _ if self.is_victory():
-                        logger.trace("镜牢结算验证")
-                        check_mirror_completion()
-                        retry_count += 1
-                        if time.time() - start_time > TIMEOUT:
-                            logger.warning("[镜牢结算]超时，重新启动流程...")
-                            break
-
-                    case _:
-                        logger.warning("没有匹配的事件")
-                        other_event()
-                        continue
-
-                if time.time() - start_time > TIMEOUT:
-                    logger.warning("超时，重新启动流程...")
+                case _ if self.is_victory():
+                    logger.trace("镜牢结算验证")
+                    self.mirror_pass_flag = check_mirror_completion()
+                    if time.time() - start_time > TIMEOUT:
+                        logger.warning("[镜牢结算]超时，重新启动流程...")
+                        break
                     break
 
-            self.mirror_pass_flag = check_mirror_completion()
+                case _:
+                    logger.warning("没有匹配的事件")
+                    other_event()
+                    continue
+
+            if time.time() - start_time > TIMEOUT:
+                logger.warning("超时，重新启动流程...")
+                break
 
     def clear_events(self):
         cfg.img_event.clear()
@@ -266,8 +253,10 @@ class Mirror_Wuthering:
         logger.info("判断镜牢胜利")
         try:
             cfg.img_event.wait(timeout=10)
-            if text_exists(cfg.img_src, '战斗胜利') and text_exists(cfg.img_src, '累计造成伤害') and (
-                    text_exists(cfg.img_src, '探索完成') or text_exists(cfg.img_src, '总进度')):
+            if text_exists(cfg.img_src, '战斗胜利') and text_exists(cfg.img_src, '累计造成伤害') and text_exists(
+                    cfg.img_src, '优秀员工') or (
+                    text_exists(cfg.img_src, '探索完成') and text_exists(cfg.img_src, '总进度')) or text_exists(
+                cfg.img_src, '探索结束奖励'):
                 return True
             return False
         finally:
