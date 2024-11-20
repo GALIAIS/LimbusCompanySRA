@@ -2,7 +2,7 @@
 
 # LimbusCompanySRA
 
-为《Limbus Company》设计的自动化脚本，提供 OCR 识别、目标检测、自动点击等多种功能，帮助玩家优化游戏体验。
+为 Limbus Company 设计的自动化脚本，提供 OCR 识别、目标检测、自动点击等多种功能，帮助玩家优化游戏体验。
 
 ---
 
@@ -33,7 +33,7 @@
 
 ### 环境要求
 
-- Python 3.11 或以上版本  
+- Python 3.12 或以上版本  
 - `torch >= 2.2.0`  
 - `torchvision >= 0.17.0`
 
@@ -48,7 +48,7 @@ cd LimbusCompanySRA
 
 #### 2️⃣ 下载并配置 Python
 
-1. 从 [Python 官方网站](https://www.python.org/downloads/) 下载 **3.11+ 版本**。  
+1. 从 [Python 官方网站](https://www.python.org/downloads/) 下载 **3.12+ 版本**。  
 2. 选择 **Windows Embeddable Package**，解压后将文件夹命名为 `python`。  
 3. 修改解压文件夹中的 `.pth` 文件，将文件中 `import` 之前的 `#` 删除。
 
@@ -135,7 +135,7 @@ python LBCSRA.py
 欢迎社区贡献，共同完善项目！以下是参与步骤：
 
 1. **Fork 本仓库**  
-2. **创建功能分支**（如：`feature/新增功能`）  
+2. **创建功能分支**
 3. **提交更改**  
 4. **推送分支**  
 5. **发起 Pull Request**
