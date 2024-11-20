@@ -5,7 +5,6 @@ import random
 import re
 import threading
 import time
-
 import cv2
 import mss
 import numpy as np
@@ -331,10 +330,6 @@ def get_ocr_data(img_src: np.ndarray) -> list:
     except Exception as e:
         logger.error(f"OCR 数据获取失败: {e}")
         return []
-
-
-import re
-import numpy as np
 
 
 def text_exists(img_src: np.ndarray, text: str, flag: bool = False, confidence_threshold: float = 0.8) -> bool:
