@@ -333,20 +333,40 @@ def get_ocr_data(img_src: np.ndarray) -> list:
         return []
 
 
-def text_exists(img_src: np.ndarray, text: str, flag: bool = False) -> bool:
+import re
+import numpy as np
+
+
+def text_exists(img_src: np.ndarray, text: str, flag: bool = False, confidence_threshold: float = 0.8) -> bool:
     try:
-        if img_src is not None:
-            result = ocr_process(get_ocr_data(img_src))
-            if flag:
-                print(result)
-            pattern = re.compile(text)
-            for res in result:
-                if pattern.search(res['text']):
-                    return True
+        if img_src is None:
+            logger.warning("文本检测失败: img_src 为空")
             return False
+
+        ocr_results = ocr_process(get_ocr_data(img_src))
+        if flag:
+            print("OCR结果:", ocr_results)
+
+        try:
+            pattern = re.compile(text)
+        except re.error:
+            logger.warning(f"无效的正则表达式: {text}，将对其进行转义处理")
+            pattern = re.compile(re.escape(text))
+
+        for res in ocr_results:
+            ocr_text = res['text']
+            confidence = res['confidence']
+            if confidence >= confidence_threshold and pattern.search(ocr_text):
+                if flag:
+                    logger.info(f"匹配成功: {ocr_text} | 置信度: {confidence}")
+                return True
+
+        if flag:
+            logger.info(f"匹配失败: 未找到符合条件的文本 | 输入: {text}")
         return False
     except Exception as e:
-        logger.error(f"文本检测失败: {e}")
+        if flag:
+            logger.error(f"文本检测失败: {e} | 输入文本: {text}")
         return False
 
 

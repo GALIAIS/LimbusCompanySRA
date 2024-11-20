@@ -6,6 +6,7 @@ from typing import Optional
 
 import numpy as np
 from attrs import define, Factory
+from src.app.utils.ConfigManager import cfgm
 
 
 @define
@@ -21,7 +22,8 @@ class Config:
     else:
         base_path = Path(__file__).resolve().parents[1]
 
-    model_path = base_path / "model" / "LBC.pt"
+    # model_path = base_path / "model" / "LBC.pt"
+    model_path = cfgm.get("BaseSetting.Model_path")
 
     # 窗口
     window_width: int = 0

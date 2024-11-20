@@ -270,8 +270,8 @@ class PushSettingCardX(SettingCardX):
         super().__init__(icon, title, content, parent)
         self.config_key = config_key
 
-        if self.config_key and content is not None:
-            cfgm.set(self.config_key, content)
+        # if self.config_key and content is not None:
+        #     cfgm.set(self.config_key, content)
 
         self.button = QPushButton(text, self)
         self.hBoxLayout.addWidget(self.button, 0, Qt.AlignRight)

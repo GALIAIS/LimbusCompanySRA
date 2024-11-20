@@ -52,6 +52,7 @@ class GameInterface(ScrollArea):
         self.Mirror_Dungeons_Group.addSettingCard(self.mirror_switch)
         self.Mirror_Dungeons_Group.addSettingCard(self.mirror_only_flag)
         self.Mirror_Dungeons_Group.addSettingCard(self.mirror_loop_count)
+        self.Mirror_Dungeons_Group.addSettingCard(self.mirror_battle_count)
         self.Mirror_Dungeons_Group.addSettingCard(self.theme_pack_choose)
         self.Luxcavation_Group.addSettingCard(self.luxcavation_loop_count)
         self.Luxcavation_Group.addSettingCard(self.luxcavation_exp_switch)
@@ -92,8 +93,15 @@ class GameInterface(ScrollArea):
                                                   f"{cfgm.get("Mirror_Dungeons.theme_pack_choose")}", None,
                                                   "Mirror_Dungeons.theme_pack_choose")
 
+        self.mirror_battle_count = PushSettingCardX("修改", FIF.INFO, "镜牢战斗循环次数",
+                                                    f"{cfgm.get("Mirror_Dungeons.mirror_battle_count")}", None,
+                                                    "Mirror_Dungeons.mirror_battle_count")
         self.mirror_loop_count.clicked.connect(
             lambda: self.open_setting_dialog("Mirror_Dungeons.mirror_loop_count", self.mirror_loop_count,
+                                             "设置循环次数",
+                                             "请输入循环次数:", "LineEdit", validator=QIntValidator(1, 100)))
+        self.mirror_battle_count.clicked.connect(
+            lambda: self.open_setting_dialog("Mirror_Dungeons.mirror_battle_count", self.mirror_battle_count,
                                              "设置循环次数",
                                              "请输入循环次数:", "LineEdit", validator=QIntValidator(1, 100)))
         self.theme_pack_choose.clicked.connect(
@@ -142,22 +150,22 @@ class GameInterface(ScrollArea):
                 setting_card.setContent(f"{'启用' if new_value else '禁用'}")
 
     def open_theme_pack_dialog(self, setting_key, setting_card):
-        available_packs = ["被遗忘者们", "无归属者", "身无分文的赌徒", "自动工厂", "无慈悲者", "钉与锤", "信仰与侵蚀",
-                           "无作为者",
-                           "巢，工坊，技术", "落花", "落泪者们", "无改变者", "湖的世界", "伏行深渊", "定义为恶",
-                           "宅邸的副产物",
-                           "某个世界", "地狱鸡", "去·海·边", "20区的奇迹", "肉斩骨断", "时间杀人时间", "WARP快车谋杀案",
-                           "紫罗兰的正午", "斩切者们", "当斩之物", "穿刺者们", "当刺之物", "破坏者们", "当碎之物",
-                           "压抑的愤怒",
-                           "解放的暴怒", "受情感压抑者", "沉迷的色欲", "捆缚的色欲", "因情感困惑者", "徒劳的怠惰",
-                           "停滞的怠惰",
-                           "待情感懒惰者", "吞噬的暴食", "漫溢的暴食", "对情感饥渴者", "堕落的忧郁", "沉溺的忧郁",
-                           "于情感沉溺者",
-                           "虚张声势的傲慢", "自以为是的傲慢", "向情感屈从者", "寒微的嫉妒", "可悲的嫉妒",
-                           "被情感评判者",
-                           "燃烧的摇曳", "盛火时节", "渗出的赤血", "尸山血海", "缭乱的波动", "异常地震带", "破坏性外力",
-                           "破竹之势",
-                           "沉于苦痛", "沉沦泛滥", "一声叹息", "循环呼吸", "动力渐盈", "电闪雷鸣"]
+        available_packs = ['被遗忘者们', '无归属者', '身无分文的赌徒', '自动工厂', '无慈悲者', '钉与锤', '信仰与侵蚀',
+                           '无作为者',
+                           '巢，工坊，技术', '落花', '落泪者们', '无改变者', '湖的世界', '伏行深渊', '定义为恶',
+                           '宅邸的副产物',
+                           '某个世界', '地狱鸡', '去·海·边', '20区的奇迹', '肉斩骨断', '时间杀人时间', 'WARP快车谋杀案',
+                           '紫罗兰的正午', '斩切者们', '当斩之物', '穿刺者们', '当刺之物', '破坏者们', '当碎之物',
+                           '压抑的愤怒',
+                           '解放的暴怒', '受情感压抑者', '沉迷的色欲', '捆缚的色欲', '因情感困惑者', '徒劳的怠惰',
+                           '停滞的怠惰',
+                           '待情感懒惰者', '吞噬的暴食', '漫溢的暴食', '对情感饥渴者', '堕落的忧郁', '沉溺的忧郁',
+                           '于情感沉溺者',
+                           '虚张声势的傲慢', '自以为是的傲慢', '向情感屈从者', '寒微的嫉妒', '可悲的嫉妒',
+                           '被情感评判者',
+                           '燃烧的摇曳', '盛火时节', '渗出的赤血', '尸山血海', '缭乱的波动', '异常地震带', '破坏性外力',
+                           '破竹之势',
+                           '沉于苦痛', '沉沦泛滥', '一声叹息', '循环呼吸', '动力渐盈', '电闪雷鸣']
 
         selected_packs = cfgm.get(setting_key) or []
 
@@ -166,7 +174,8 @@ class GameInterface(ScrollArea):
         if dialog.exec() == QDialog.DialogCode.Accepted:
             selected_packs = dialog.getSelectedItems()
             cfgm.set(setting_key, selected_packs)
-            setting_card.setContent(", ".join(selected_packs))
+            formatted_content = ', '.join(selected_packs)
+            setting_card.setContent(formatted_content)
 
     # def openMirrorLoopCountDialog(self):
     #     initial_count = cfgm.get("Mirror_Dungeons.mirror_loop_count")
@@ -289,10 +298,13 @@ class MultiSelectDialog(QDialog):
     def __init__(self, title, items, selected_items=None, parent=None):
         super().__init__(parent=parent)
         self.setWindowTitle(title)
-        self.setFixedSize(400, 300)
+        self.setFixedSize(400, 400)
 
         self.items = items
         self.selected_items = selected_items or []
+
+        label = QLabel("请选择主题包：", self)
+        label.setAlignment(Qt.AlignmentFlag.AlignLeft)
 
         self.list_widget = QListWidget(self)
         self.list_widget.setSelectionMode(QListWidget.SelectionMode.MultiSelection)
@@ -311,11 +323,19 @@ class MultiSelectDialog(QDialog):
                 item.setSelected(True)
 
         self.ok_button = QPushButton("确定", self)
+        self.cancel_button = QPushButton("取消", self)
         self.ok_button.clicked.connect(self.accept)
+        self.cancel_button.clicked.connect(self.reject)
+
+        button_layout = QHBoxLayout()
+        button_layout.addStretch()
+        button_layout.addWidget(self.ok_button)
+        button_layout.addWidget(self.cancel_button)
 
         layout = QVBoxLayout(self)
+        layout.addWidget(label)
         layout.addWidget(self.list_widget)
-        layout.addWidget(self.ok_button)
+        layout.addLayout(button_layout)
 
     def getSelectedItems(self):
         return [item.text() for item in self.list_widget.selectedItems()]

@@ -27,10 +27,12 @@ class MainWindow(MSFluentWindow):
         self.init_window()
         self.initInterface()
 
+        print(cfgm.get("Mirror_Dungeons.theme_pack_choose"))
+
     def init_window(self):
         setThemeColor('#810000', lazy=True)
         self.resize(900, 640)
-        setTheme(Theme.AUTO, lazy=True)
+        setTheme(Theme.DARK, lazy=True)
         self.setMicaEffectEnabled(False)
 
         self.titleBar.maxBtn.setDisabled(True)
