@@ -153,18 +153,8 @@ python LBCSRA.py
     border-radius: 10px;
     padding: 15px;
     display: inline-block;
-    background-color: #F9F9F9;
-    transition: background-color 0.3s, border-color 0.3s;">
-
-  <style>
-    @media (prefers-color-scheme: dark) {
-      div[style] {
-        background-color: #1E1E1E !important;
-        border-color: #5294E2 !important;
-        color: #FFFFFF !important;
-      }
-    }
-  </style>
+    background-color: #111111;
+    color: #000000;">
 
   <img src="https://x.imgex.org/1/67408f168309a.png" alt="LocalizeLimbusCompany Logo" width="120">
 
