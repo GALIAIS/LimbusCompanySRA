@@ -19,6 +19,7 @@ ultralytics~=8.3.31
 paddleocr~=2.9.1
 bidict~=0.23.1
 pydirectinput-rgx
+paddlepaddle
 paddlepaddle-gpu
 PyAutoGUI-ng
 pywin32
