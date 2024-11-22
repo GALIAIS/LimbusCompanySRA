@@ -1,7 +1,38 @@
 # -*- coding: utf-8 -*-
-
+import time
+from enum import Enum, auto
+from typing import Callable
 from src.common.actions import *
 from src.common.utils import *
+
+
+class EventType(Enum):
+    ThemesPackChosen = auto()
+    EgoGiftChosen = auto()
+    EncounterReward = auto()
+    PathChosen = auto()
+    Shop = auto()
+    BattleInterface = auto()
+    InBattle = auto()
+    AbnormalityEncounter = auto()
+    ServerError = auto()
+    Victory = auto()
+
+
+EventHandler = Callable[[], None]
+
+event_handlers = {
+    EventType.ThemesPackChosen: choose_themes_pack,
+    EventType.EgoGiftChosen: lambda: (choose_ego_gift(), confirm_ego_gift_info(), other_event()),
+    EventType.EncounterReward: choose_encounter_reward_card,
+    EventType.PathChosen: lambda: (choose_path(), enter_event()),
+    EventType.Shop: shop_buy,
+    EventType.BattleInterface: lambda: (enter_event(), battle_choose_characters()),
+    EventType.InBattle: start_battle,
+    EventType.AbnormalityEncounter: abnormality_encounters_event,
+    EventType.ServerError: server_error,
+    EventType.Victory: check_mirror_completion,
+}
 
 
 @define
@@ -29,14 +60,44 @@ class Mirror_Wuthering:
                 continue
 
             while True:
-                navigate_to_mirror_dungeons()
-                enter_wuthering_mirror()
-                choose_random_ego_gift()
-                confirm_ego_gift_info()
-                team_formation()
-                choose_themes_pack()
-                cfg.img_event.wait(timeout=20)
-                if text_exists(cfg.img_src, r'正在探索第.+层') and not labels_exists(cfg.bboxes, Labels_ID['Drive']):
+                cfg.img_event.wait(timeout=10)
+                cfg.bboxes_event.wait(timeout=10)
+                if labels_exists(cfg.bboxes, Labels_ID['Drive']) and not text_exists(cfg.img_src, '呼啸之镜'):
+                    cfg.img_event.clear()
+                    cfg.bboxes_event.clear()
+                    navigate_to_mirror_dungeons()
+                    continue
+
+                cfg.img_event.wait(timeout=10)
+                if text_exists(cfg.img_src, '呼啸之镜') or text_exists(cfg.img_src, r'探索状态'):
+                    cfg.img_event.clear()
+                    enter_wuthering_mirror()
+                    continue
+
+                cfg.img_event.wait(timeout=10)
+                if text_exists(cfg.img_src, r'选择.+饰品') and not text_exists(cfg.img_src, r'获得.+饰品.*'):
+                    cfg.img_event.clear()
+                    choose_random_ego_gift()
+                    continue
+
+                cfg.img_event.wait(timeout=10)
+                if (text_exists(cfg.img_src, 'E.G.O饰品信息') or text_exists(cfg.img_src,
+                                                                             r'获得.+饰品.*')) and text_exists(
+                    cfg.img_src, '确认'):
+                    cfg.img_event.clear()
+                    confirm_ego_gift_info()
+                    continue
+
+                cfg.img_event.wait(timeout=10)
+                if text_exists(cfg.img_src, '播报员') and text_exists(cfg.img_src, '确认') and text_exists(cfg.img_src,
+                                                                                                           '罪孽碎片'):
+                    cfg.img_event.clear()
+                    team_formation()
+                    continue
+
+                cfg.img_event.wait(timeout=10)
+                if (text_exists(cfg.img_src, r'选择.+层主题卡包') and not labels_exists(cfg.bboxes, Labels_ID[
+                    'Drive'])) or text_exists(cfg.img_src, r'正在探索第.+层'):
                     logger.info('结束初始任务')
                     cfg.img_event.clear()
                     mirror_only_flag = False
@@ -46,221 +107,166 @@ class Mirror_Wuthering:
             logger.trace("开始镜牢4循环")
             start_time = time.time()
 
-            match True:
-                case _ if self.is_themes_pack_chosen():
-                    logger.trace("Themes Pack选择")
-                    choose_themes_pack()
-                    if time.time() - start_time > TIMEOUT:
-                        logger.warning("[选择主题包]超时，重新启动流程...")
+            cfg.img_event.wait(timeout=5)
+            cfg.bboxes_event.wait(timeout=5)
+
+            try:
+                while True:
+                    event_type = None
+                    match True:
+                        case _ if self.is_path_chosen():
+                            event_type = EventType.PathChosen
+                        case _ if self.is_battle_interface():
+                            event_type = EventType.BattleInterface
+                        case _ if self.is_in_battle():
+                            event_type = EventType.InBattle
+                        case _ if self.is_encounter_reward():
+                            event_type = EventType.EncounterReward
+                        case _ if self.is_themes_pack_chosen():
+                            event_type = EventType.ThemesPackChosen
+                        case _ if self.is_ego_gift_chosen():
+                            event_type = EventType.EgoGiftChosen
+                        case _ if self.is_shop():
+                            event_type = EventType.Shop
+                        case _ if self.is_abnormality_encounter():
+                            event_type = EventType.AbnormalityEncounter
+                        case _ if self.is_server_error():
+                            event_type = EventType.ServerError
+                        case _ if self.is_victory():
+                            event_type = EventType.Victory
+                            self.mirror_pass_flag = event_handlers[event_type]()
+                            break
+                        case _:
+                            logger.warning("没有匹配的事件")
+                            other_event()
+                            continue
+
+                    if event_type in event_handlers:
+                        logger.trace(f"处理事件: {event_type}")
+                        event_handlers[event_type]()
+                    else:
+                        logger.error(f"未找到事件处理函数: {event_type}")
                         break
 
-                case _ if self.is_ego_gift_chosen():
-                    logger.trace("选择E.G.O饰品")
-                    choose_ego_gift()
-                    confirm_ego_gift_info()
-                    other_event()
-                    if time.time() - start_time > TIMEOUT:
-                        logger.warning("[选择E.G.O赠品]超时，重新启动流程...")
-                        break
-
-                case _ if self.is_encounter_reward():
-                    logger.trace("选择遭遇战奖励卡")
-                    choose_encounter_reward_card()
-                    if time.time() - start_time > TIMEOUT:
-                        logger.warning("[遭遇战奖励]超时，重新启动流程...")
-                        break
-
-                case _ if self.is_path_chosen():
-                    logger.trace("开始路径选择...")
-                    choose_path()
-                    enter_event()
-                    if time.time() - start_time > TIMEOUT:
-                        logger.warning("[选择路径]超时，重新启动流程...")
-                        break
-
-                case _ if self.is_shop():
-                    logger.trace("进入商店界面")
-                    shop_buy()
-                    if time.time() - start_time > TIMEOUT:
-                        logger.warning("[商店交易]超时，重新启动流程...")
-                        break
-
-                case _ if self.is_battle_interface():
-                    logger.trace("进入事件界面")
-                    enter_event()
-                    battle_choose_characters()
-                    if time.time() - start_time > TIMEOUT:
-                        logger.warning("[进入事件]超时，重新启动流程...")
-                        break
-
-                case _ if self.is_in_battle():
-                    logger.trace("开始战斗流程")
-                    start_battle()
-                    if time.time() - start_time > TIMEOUT:
-                        logger.warning("[战斗]超时，重新启动流程...")
-                        break
-
-                case _ if self.is_abnormality_encounter():
-                    logger.trace("开始处理异想体遭遇事件")
-                    abnormality_encounters_event()
-                    if time.time() - start_time > TIMEOUT:
-                        logger.warning("[处理异常遭遇]超时，重新启动流程...")
-                        break
-
-                case _ if self.is_server_error():
-                    logger.trace("服务器异常处理")
-                    server_error()
-                    if time.time() - start_time > TIMEOUT:
-                        logger.warning("[服务器异常]超时，重新启动流程...")
-                        break
-
-                case _ if self.is_victory():
-                    logger.trace("镜牢结算验证")
-                    self.mirror_pass_flag = check_mirror_completion()
-                    if time.time() - start_time > TIMEOUT:
-                        logger.warning("[镜牢结算]超时，重新启动流程...")
-                        break
-                    break
-
-                case _:
-                    logger.warning("没有匹配的事件")
-                    other_event()
                     continue
+
+            finally:
+                cfg.img_event.clear()
+                cfg.bboxes_event.clear()
 
             if time.time() - start_time > TIMEOUT:
                 logger.warning("超时，重新启动流程...")
                 break
 
+        logger.info("镜牢4流程结束")
+
     def clear_events(self):
         cfg.img_event.clear()
         cfg.bboxes_event.clear()
 
+    def prepare(self):
+        cfg.img_event.wait(timeout=10)
+        cfg.bboxes_event.wait(timeout=10)
+
+    def check_condition(self, *conditions):
+        for condition in conditions:
+            if condition():
+                return True
+        return False
+
     def is_themes_pack_chosen(self):
         logger.info("判断选择主题包条件")
-        try:
-            cfg.img_event.wait(timeout=10)
-            if text_exists(cfg.img_src, r'选择.+层主题卡包'):
-                return True
-            return False
-        finally:
-            self.clear_events()
+        return text_exists(cfg.img_src, r'选择.+层主题卡包')
 
     def is_ego_gift_chosen(self):
         logger.info("判断E.G.O饰品条件")
-        try:
-            move_mouse_to_center()
-            cfg.img_event.wait(timeout=10)
-            if text_exists(cfg.img_src, r'选择.+饰品') and text_exists(cfg.img_src, r'获得.+饰品.*') \
-                    and text_exists(cfg.img_src, '拒绝饰品') and not text_exists(cfg.img_src, '探索完成'):
-                return True
-            if text_exists(cfg.img_src, r'获得.+饰品.*') and text_exists(cfg.img_src, r'正在探索第.+层'):
-                return True
-            return False
-        finally:
-            self.clear_events()
+        return (
+                text_exists(cfg.img_src, r'选择.+饰品')
+                and text_exists(cfg.img_src, r'获得.+饰品.*')
+                and text_exists(cfg.img_src, '拒绝饰品')
+                and not text_exists(cfg.img_src, '探索完成')
+        ) or (
+                text_exists(cfg.img_src, r'获得.+饰品.*')
+                and text_exists(cfg.img_src, r'正在探索第.+层')
+        )
 
     def is_encounter_reward(self):
         logger.info("判断遭遇战奖励卡条件")
-        try:
-            cfg.img_event.wait(timeout=10)
-            if text_exists(cfg.img_src, '选择遭遇战奖励卡'):
-                return True
-            return False
-        finally:
-            self.clear_events()
+        return text_exists(cfg.img_src, '选择遭遇战奖励卡')
 
     def is_path_chosen(self):
         logger.info("判断路径选择条件")
-        try:
-            mouse_scroll(-100)
-            cfg.img_event.wait(timeout=10)
-            cfg.bboxes_event.wait(timeout=10)
-            if text_exists(cfg.img_src, r'正在探索第.+层') and (
-                    labels_exists(cfg.bboxes, Labels_ID['Battle Node']) or labels_exists(cfg.bboxes,
-                                                                                         Labels_ID['Current Node'])
-            ) and not labels_exists(cfg.bboxes, Labels_ID['Enter']) and not text_exists(cfg.img_src,
-                                                                                        r'服务器发生错误.*'):
-                return True
-            return False
-        finally:
-            self.clear_events()
+        if (text_exists(cfg.img_src, r'正在探索.*')
+                or (
+                        labels_exists(cfg.bboxes, Labels_ID['Safe Node'])
+                        or labels_exists(cfg.bboxes, Labels_ID['Current Node'])
+                        or labels_exists(cfg.bboxes, Labels_ID['Battle Node'])
+                )):
+            mouse_scroll(-200)
+        return (
+                text_exists(cfg.img_src, r'正在探索.*')
+                and (
+                        labels_exists(cfg.bboxes, Labels_ID['Safe Node'])
+                        or labels_exists(cfg.bboxes, Labels_ID['Current Node'])
+                        or labels_exists(cfg.bboxes, Labels_ID['Battle Node'])
+                )
+                and not labels_exists(cfg.bboxes, Labels_ID['Enter'])
+                and not text_exists(cfg.img_src, r'服务器发生错误.*')
+        )
 
     def is_shop(self):
         logger.info("判断商店界面条件")
-        try:
-            cfg.img_event.wait(timeout=10)
-            if not text_exists(cfg.img_src, '商品列表') and text_exists(cfg.img_src, r'SKIP.*'):
-                cfg.bboxes_event.wait(timeout=10)
-                check_label_and_clickR(cfg.bboxes, 'Skip', clicks=5)
-            if text_exists(cfg.img_src, r'商品列表.*') or text_exists(cfg.img_src, '治疗罪人'):
-                return True
-            return False
-        finally:
-            self.clear_events()
+        if text_exists(cfg.img_src, r'SKIP.*') or text_exists(cfg.img_src, r"\d{2}:\d{2}:\d{2}:\d{2}"):
+            check_text_and_clickR(r'SKIP.*', 10)
+        return text_exists(cfg.img_src, r'商品列表.*') or text_exists(cfg.img_src, '治疗罪人') or text_exists(
+            cfg.img_src, '结果')
 
     def is_battle_interface(self):
         logger.info("判断进入战斗与角色选择界面条件")
-        try:
-            cfg.img_event.wait(timeout=10)
-            if (text_exists(cfg.img_src, '进入') or text_exists(cfg.img_src, '通关奖励') or text_exists(cfg.img_src,
-                                                                                                        r'可参战.*')
-                or text_exists(cfg.img_src, '开始战斗')) and not text_exists(cfg.img_src, '战斗胜利'):
-                return True
-            return False
-        finally:
-            self.clear_events()
+        return (
+                text_exists(cfg.img_src, '进入')
+                or text_exists(cfg.img_src, '通关奖励')
+                or text_exists(cfg.img_src, r'可参战.*')
+                or text_exists(cfg.img_src, '开始战斗')
+        ) and not text_exists(cfg.img_src, '战斗胜利')
 
     def is_in_battle(self):
         logger.info("判断战斗界面条件")
-        try:
-            cfg.bboxes_event.wait(timeout=10)
-            if labels_exists(cfg.bboxes, Labels_ID['Win Rate']) and labels_exists(cfg.bboxes, Labels_ID['Damage']) \
-                    and (text_exists(cfg.img_src, '胜率') or text_exists(cfg.img_src, '伤害')) and not text_exists(
-                cfg.img_src, '战斗胜利'):
-                return True
-            return False
-        finally:
-            self.clear_events()
+        return (
+                labels_exists(cfg.bboxes, Labels_ID['Win Rate'])
+                and labels_exists(cfg.bboxes, Labels_ID['Damage'])
+                and (
+                        text_exists(cfg.img_src, '胜率')
+                        or text_exists(cfg.img_src, '伤害')
+                )
+                and not text_exists(cfg.img_src, '战斗胜利')
+        )
 
     def is_abnormality_encounter(self):
         logger.info("判断异想体遭遇条件")
-        try:
-            cfg.img_event.wait(timeout=10)
-            check_text_and_clickR(r'SKIP.*', clicks=10)
-            cfg.img_event.wait(timeout=10)
-            if (text_exists(cfg.img_src, r'SKIP.*') or text_exists(cfg.img_src, "决断") or text_exists(
-                    cfg.img_src, r".*选择后.+获得.+饰品") or text_exists(cfg.img_src, '判定成功')) and not text_exists(
-                cfg.img_src,
-                '商品列表') and not text_exists(
-                cfg.img_src, '治疗罪人') and not text_exists(cfg.img_src, '强化饰品') and not text_exists(cfg.img_src,
-                                                                                                          r'正在探索第.+层'):
-                return True
-            return False
-        finally:
-            self.clear_events()
+        check_text_and_clickR(r'SKIP.*', 10)
+        return (
+                text_exists(cfg.img_src, r'SKIP.*')
+                or text_exists(cfg.img_src, "决断")
+                or labels_exists(cfg.bboxes, Labels_ID['Skip'])
+                or text_exists(cfg.img_src, r".*选择后.+获得.+饰品")
+                or text_exists(cfg.img_src, '判定成功')
+        ) and not text_exists(cfg.img_src, '商品列表') and not text_exists(cfg.img_src, '治疗罪人')
 
     def is_server_error(self):
         logger.info("判断服务器异常条件")
-        try:
-            cfg.img_event.wait(timeout=10)
-            if text_exists(cfg.img_src, r'服务器发生错误.*'):
-                return True
-            return False
-        finally:
-            self.clear_events()
+        return text_exists(cfg.img_src, r'服务器发生错误.*')
 
     def is_victory(self):
         logger.info("判断镜牢胜利")
-        try:
-            cfg.img_event.wait(timeout=10)
-            if text_exists(cfg.img_src, '战斗胜利') and text_exists(cfg.img_src, '累计造成伤害') and text_exists(
-                    cfg.img_src, '优秀员工') or (
-                    text_exists(cfg.img_src, '探索完成') and text_exists(cfg.img_src, '总进度')) or text_exists(
-                cfg.img_src, '探索结束奖励'):
-                return True
-            return False
-        finally:
-            self.clear_events()
+        return (
+                text_exists(cfg.img_src, '战斗胜利')
+                and text_exists(cfg.img_src, '累计造成伤害')
+                and text_exists(cfg.img_src, '优秀员工')
+        ) or (
+                text_exists(cfg.img_src, '探索完成')
+                and text_exists(cfg.img_src, '总进度')
+        ) or text_exists(cfg.img_src, '探索结束奖励')
 
     # def run(self):
     #     """循环执行镜牢4流程"""

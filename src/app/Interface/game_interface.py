@@ -52,7 +52,6 @@ class GameInterface(ScrollArea):
         self.Mirror_Dungeons_Group.addSettingCard(self.mirror_switch)
         self.Mirror_Dungeons_Group.addSettingCard(self.mirror_only_flag)
         self.Mirror_Dungeons_Group.addSettingCard(self.mirror_loop_count)
-        self.Mirror_Dungeons_Group.addSettingCard(self.mirror_battle_count)
         self.Mirror_Dungeons_Group.addSettingCard(self.theme_pack_choose)
         self.Luxcavation_Group.addSettingCard(self.luxcavation_loop_count)
         self.Luxcavation_Group.addSettingCard(self.luxcavation_exp_switch)
@@ -92,16 +91,8 @@ class GameInterface(ScrollArea):
         self.theme_pack_choose = PushSettingCardX("修改", FIF.INFO, "指定主题包",
                                                   f"{cfgm.get("Mirror_Dungeons.theme_pack_choose")}", None,
                                                   "Mirror_Dungeons.theme_pack_choose")
-
-        self.mirror_battle_count = PushSettingCardX("修改", FIF.INFO, "镜牢战斗循环次数",
-                                                    f"{cfgm.get("Mirror_Dungeons.mirror_battle_count")}", None,
-                                                    "Mirror_Dungeons.mirror_battle_count")
         self.mirror_loop_count.clicked.connect(
             lambda: self.open_setting_dialog("Mirror_Dungeons.mirror_loop_count", self.mirror_loop_count,
-                                             "设置循环次数",
-                                             "请输入循环次数:", "LineEdit", validator=QIntValidator(1, 100)))
-        self.mirror_battle_count.clicked.connect(
-            lambda: self.open_setting_dialog("Mirror_Dungeons.mirror_battle_count", self.mirror_battle_count,
                                              "设置循环次数",
                                              "请输入循环次数:", "LineEdit", validator=QIntValidator(1, 100)))
         self.theme_pack_choose.clicked.connect(

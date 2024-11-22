@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 import ctypes
+import json
 import logging
 import random
 import re
 import threading
 import time
+
 import cv2
 import mss
 import numpy as np
@@ -330,6 +332,10 @@ def get_ocr_data(img_src: np.ndarray) -> list:
     except Exception as e:
         logger.error(f"OCR 数据获取失败: {e}")
         return []
+
+
+import re
+import numpy as np
 
 
 def text_exists(img_src: np.ndarray, text: str, flag: bool = False, confidence_threshold: float = 0.8) -> bool:
@@ -941,6 +947,11 @@ def ocr_update_thread():
         except Exception as e:
             logger.error(f"ocr_update_thread 中的错误: {e}")
             break
+
+
+def load_event_data(file_path):
+    with open(file_path, 'r', encoding='utf-8') as f:
+        return json.load(f)
 
 
 wm = WindowManager()
