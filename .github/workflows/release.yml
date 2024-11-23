@@ -14,14 +14,12 @@ jobs:
 
       - name: Create a ZIP archive
         run: |
-          # Create a zip archive excluding .github, .idea, .pyc files, and .git directory
-          zip -r source-code.zip . -x ".github/*" ".idea/*" "*.pyc" ".git/*"
+          zip -r source-code.zip . -x "*.git/*" "*.github/*" "*.idea/*" "*.pyc"
 
       - name: Create a TAR.GZ archive with exclusions
         run: |
-          # Create a tar.gz archive excluding .github, .idea, .pyc files, and .git directory
-          tar --warning=no-file-changed -czvf source-code.tar.gz \
-            --exclude=".github" --exclude=".idea" --exclude="*.pyc" --exclude=".git" .
+          # Using git ls-files to exclude files managed by git, including .git
+          git ls-files --exclude-standard -o -z | tar --warning=no-file-changed --null -czvf source-code.tar.gz --files-from=-
 
       - name: Create GitHub Release
         id: create_release
