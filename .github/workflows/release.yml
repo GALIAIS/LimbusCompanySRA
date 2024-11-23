@@ -1,51 +1,71 @@
-name: Build and Release
+name: Package Source Code
 
 on:
   push:
     tags:
-      - "v*"
+      - 'v*'
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
-      - name: Create a ZIP archive
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.12'
+
+      - name: Cache Python dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-python-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-python-
+
+      - name: Install dependencies
         run: |
-          # Create a zip archive excluding .github, .idea, and .git directories
-          zip -r source-code.zip . -x ".github/*" ".idea/*" ".git/*" "*.pyc"
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
-      - name: Create a TAR.GZ archive with exclusions
+      - name: Create a tar.gz archive excluding .github, .idea, and .git directories
         run: |
-          # Create a tar.gz archive excluding .github, .idea, and .git directories
-          tar --warning=no-file-changed -czvf source-code.tar.gz \
-            --exclude=".github" --exclude=".idea" --exclude=".git" --exclude="*.pyc" .
+          echo "Creating tar.gz archive..."
+          timestamp=$(date +'%Y%m%d%H%M%S')
+          archive_name="source-code-${timestamp}.tar.gz"
+          tar -czvf $archive_name \
+            --exclude=".github" \
+            --exclude=".idea" \
+            --exclude=".git" \
+            --exclude="*.pyc" \
+            --warning=no-file-changed .
+          echo "Created archive: $archive_name"
 
-      - name: Create GitHub Release
-        id: create_release
-        uses: actions/create-release@v1
+      - name: Upload tar.gz as build artifact
+        uses: actions/upload-artifact@v2
         with:
-          tag_name: ${{ github.ref_name }}
-          release_name: Release ${{ github.ref_name }}
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: source-code-archive
+          path: source-code-${timestamp}.tar.gz
 
-      - name: Upload ZIP Asset
-        uses: actions/upload-release-asset@v1
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./source-code.zip
-          asset_name: source-code.zip
-          asset_content_type: application/zip
+      - name: Create a zip file for easy download
+        run: |
+          echo "Creating zip archive..."
+          zip_name="source-code-${timestamp}.zip"
+          zip -r $zip_name . -x "*.git*" "*.idea*" "*.github*" "*.pyc*"
+          echo "Created zip: $zip_name"
 
-      - name: Upload TAR.GZ Asset
-        uses: actions/upload-release-asset@v1
+      - name: Upload zip file as build artifact
+        uses: actions/upload-artifact@v2
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./source-code.tar.gz
-          asset_name: source-code.tar.gz
-          asset_content_type: application/gzip
+          name: source-code-zip
+          path: source-code-${timestamp}.zip
+
+      - name: Clean up
+        run: |
+          echo "Cleaning up generated files..."
+          rm -f source-code-${timestamp}.tar.gz source-code-${timestamp}.zip
