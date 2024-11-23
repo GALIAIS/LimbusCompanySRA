@@ -16,8 +16,7 @@
 6. [📋 已实现功能](#-已实现功能)
 7. [🔮 更新计划](#-更新计划)
 8. [🤝 贡献指南](#-贡献指南)
-9. [🙏 致谢](#-致谢)
-10. [📜 许可证](#-许可证)
+9. [📜 许可证](#-许可证)
 
 ---
 
@@ -143,44 +142,6 @@ python LBCSRA.py
 3. **提交更改**
 4. **推送分支**
 5. **发起 Pull Request**
-
----
-
-## 🙏 致谢
-
-<div align="center" style="
-    border: 2px solid #0078D7;
-    border-radius: 10px;
-    padding: 15px;
-    display: inline-block;
-    background-color: #F9F9F9;
-    transition: background-color 0.3s, border-color 0.3s;">
-
-  <style>
-    @media (prefers-color-scheme: dark) {
-      div[style] {
-        background-color: #1E1E1E !important;
-        border-color: #5294E2 !important;
-        color: #FFFFFF !important;
-      }
-    }
-  </style>
-
-  <img src="https://x.imgex.org/1/67408f168309a.png" alt="LocalizeLimbusCompany Logo" width="120">
-
-  <p>
-    🌟 <b>特别感谢</b> 
-    <a href="https://github.com/LocalizeLimbusCompany/LocalizeLimbusCompany" style="color: #0078D7; text-decoration: none;" target="_blank">
-      LocalizeLimbusCompany
-    </a> 
-    项目为本工具提供游戏内文本资源支持。
-  </p>
-
-  <p>
-    该项目对 LimbusCompanySRA 自动化程序功能实现提供了极大的帮助。
-  </p>
-
-</div>
 
 ---
 
