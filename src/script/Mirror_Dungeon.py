@@ -23,7 +23,8 @@ EventHandler = Callable[[], None]
 
 event_handlers = {
     EventType.ThemesPackChosen: choose_themes_pack,
-    EventType.EgoGiftChosen: lambda: (choose_ego_gift(), confirm_ego_gift_info(), other_event()),
+    # EventType.EgoGiftChosen: lambda: (choose_ego_gift(), confirm_ego_gift_info(), other_event()),
+    EventType.EgoGiftChosen: ego_gift_event,
     EventType.EncounterReward: choose_encounter_reward_card,
     EventType.PathChosen: lambda: (choose_path(), enter_event()),
     EventType.Shop: shop_buy,
@@ -49,59 +50,66 @@ class Mirror_Wuthering:
         TIMEOUT = 10 * 60
         MAX_RETRIES = 3
         logger.info("启动镜牢4流程")
-        RETRIES = 0
+        retries = 0
 
-        while mirror_only_flag:
+        while mirror_only_flag or retries >= MAX_RETRIES:
             img_event_wait = cfg.img_event.wait(timeout=10)
             bboxes_event_wait = cfg.bboxes_event.wait(timeout=10)
 
             if not img_event_wait or not bboxes_event_wait:
                 logger.warning("图像或框选区域事件超时，跳过当前循环")
+                retries += 1
                 continue
 
             while True:
-                cfg.img_event.wait(timeout=10)
-                cfg.bboxes_event.wait(timeout=10)
                 if labels_exists(cfg.bboxes, Labels_ID['Drive']) and not text_exists(cfg.img_src, '呼啸之镜'):
+                    logger.info("导航到镜牢")
                     cfg.img_event.clear()
                     cfg.bboxes_event.clear()
                     navigate_to_mirror_dungeons()
                     continue
 
-                cfg.img_event.wait(timeout=10)
                 if text_exists(cfg.img_src, '呼啸之镜') or text_exists(cfg.img_src, r'探索状态'):
+                    logger.info("进入呼啸之镜")
                     cfg.img_event.clear()
                     enter_wuthering_mirror()
                     continue
 
-                cfg.img_event.wait(timeout=10)
                 if text_exists(cfg.img_src, r'选择.+饰品') and not text_exists(cfg.img_src, r'获得.+饰品.*'):
+                    logger.info("选择随机饰品")
                     cfg.img_event.clear()
                     choose_random_ego_gift()
                     continue
 
-                cfg.img_event.wait(timeout=10)
                 if (text_exists(cfg.img_src, 'E.G.O饰品信息') or text_exists(cfg.img_src,
                                                                              r'获得.+饰品.*')) and text_exists(
                     cfg.img_src, '确认'):
+                    logger.info("确认饰品信息")
                     cfg.img_event.clear()
-                    confirm_ego_gift_info()
+                    ego_gift_event()
                     continue
 
-                cfg.img_event.wait(timeout=10)
                 if text_exists(cfg.img_src, '播报员') and text_exists(cfg.img_src, '确认') and text_exists(cfg.img_src,
                                                                                                            '罪孽碎片'):
+                    logger.info("队伍编成中")
                     cfg.img_event.clear()
                     team_formation()
                     continue
 
-                cfg.img_event.wait(timeout=10)
                 if (text_exists(cfg.img_src, r'选择.+层主题卡包') and not labels_exists(cfg.bboxes, Labels_ID[
                     'Drive'])) or text_exists(cfg.img_src, r'正在探索第.+层'):
-                    logger.info('结束初始任务')
+                    logger.info("结束初始任务")
                     cfg.img_event.clear()
                     mirror_only_flag = False
                     break
+
+                break
+
+            retries += 1
+            if retries >= MAX_RETRIES:
+                mirror_only_flag = False
+                logger.warning("已达最大重试次数，退出初始事件流程")
+                break
 
         while not self.mirror_pass_flag:
             logger.trace("开始镜牢4循环")
@@ -115,24 +123,34 @@ class Mirror_Wuthering:
                     event_type = None
                     match True:
                         case _ if self.is_path_chosen():
+                            logger.info("路径选择事件")
                             event_type = EventType.PathChosen
                         case _ if self.is_battle_interface():
+                            logger.info("战斗编队事件")
                             event_type = EventType.BattleInterface
                         case _ if self.is_in_battle():
+                            logger.info("战斗事件")
                             event_type = EventType.InBattle
                         case _ if self.is_encounter_reward():
+                            logger.info("遭遇奖励卡事件")
                             event_type = EventType.EncounterReward
                         case _ if self.is_themes_pack_chosen():
+                            logger.info("主题包选择事件")
                             event_type = EventType.ThemesPackChosen
-                        case _ if self.is_ego_gift_chosen():
+                        case _ if self.is_ego_gift_event():
+                            logger.info("EgoGift事件")
                             event_type = EventType.EgoGiftChosen
                         case _ if self.is_shop():
+                            logger.info("商店事件")
                             event_type = EventType.Shop
                         case _ if self.is_abnormality_encounter():
+                            logger.info("异常遭遇事件")
                             event_type = EventType.AbnormalityEncounter
                         case _ if self.is_server_error():
+                            logger.info("服务器错误事件")
                             event_type = EventType.ServerError
                         case _ if self.is_victory():
+                            logger.info("胜利事件")
                             event_type = EventType.Victory
                             self.mirror_pass_flag = event_handlers[event_type]()
                             break
@@ -175,11 +193,9 @@ class Mirror_Wuthering:
         return False
 
     def is_themes_pack_chosen(self):
-        logger.info("判断选择主题包条件")
         return text_exists(cfg.img_src, r'选择.+层主题卡包')
 
-    def is_ego_gift_chosen(self):
-        logger.info("判断E.G.O饰品条件")
+    def is_ego_gift_event(self):
         return (
                 text_exists(cfg.img_src, r'选择.+饰品')
                 and text_exists(cfg.img_src, r'获得.+饰品.*')
@@ -191,11 +207,9 @@ class Mirror_Wuthering:
         )
 
     def is_encounter_reward(self):
-        logger.info("判断遭遇战奖励卡条件")
         return text_exists(cfg.img_src, '选择遭遇战奖励卡')
 
     def is_path_chosen(self):
-        logger.info("判断路径选择条件")
         if (text_exists(cfg.img_src, r'正在探索.*')
                 or (
                         labels_exists(cfg.bboxes, Labels_ID['Safe Node'])
@@ -215,14 +229,13 @@ class Mirror_Wuthering:
         )
 
     def is_shop(self):
-        logger.info("判断商店界面条件")
         if text_exists(cfg.img_src, r'SKIP.*') or text_exists(cfg.img_src, r"\d{2}:\d{2}:\d{2}:\d{2}"):
             check_text_and_clickR(r'SKIP.*', 10)
         return text_exists(cfg.img_src, r'商品列表.*') or text_exists(cfg.img_src, '治疗罪人') or text_exists(
             cfg.img_src, '结果')
 
     def is_battle_interface(self):
-        logger.info("判断进入战斗与角色选择界面条件")
+        moveto(1380, 700)
         return (
                 text_exists(cfg.img_src, '进入')
                 or text_exists(cfg.img_src, '通关奖励')
@@ -231,7 +244,6 @@ class Mirror_Wuthering:
         ) and not text_exists(cfg.img_src, '战斗胜利')
 
     def is_in_battle(self):
-        logger.info("判断战斗界面条件")
         return (
                 labels_exists(cfg.bboxes, Labels_ID['Win Rate'])
                 and labels_exists(cfg.bboxes, Labels_ID['Damage'])
@@ -243,7 +255,6 @@ class Mirror_Wuthering:
         )
 
     def is_abnormality_encounter(self):
-        logger.info("判断异想体遭遇条件")
         check_text_and_clickR(r'SKIP.*', 10)
         return (
                 text_exists(cfg.img_src, r'SKIP.*')
@@ -254,11 +265,9 @@ class Mirror_Wuthering:
         ) and not text_exists(cfg.img_src, '商品列表') and not text_exists(cfg.img_src, '治疗罪人')
 
     def is_server_error(self):
-        logger.info("判断服务器异常条件")
         return text_exists(cfg.img_src, r'服务器发生错误.*')
 
     def is_victory(self):
-        logger.info("判断镜牢胜利")
         return (
                 text_exists(cfg.img_src, '战斗胜利')
                 and text_exists(cfg.img_src, '累计造成伤害')

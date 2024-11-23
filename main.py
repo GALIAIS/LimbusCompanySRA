@@ -86,3 +86,6 @@ class AutomationProcessManager:
 
     def is_running(self):
         return self.process and self.process.is_alive()
+
+
+ap = AutomationProcessManager()

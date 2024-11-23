@@ -16,7 +16,7 @@ Luxcavation:
         '7': 经验采光#7
         selected: 1
     exp_switch: false
-    luxcavation_loop_count: '1'
+    luxcavation_loop_count: 1
     thread_choose:
         '1': 傲慢
         '2': 嫉妒
@@ -30,7 +30,7 @@ Luxcavation:
 Mirror_Dungeons:
     mirror_battle_count: 5
     mirror_loop_count: 1
-    mirror_only_flag: false
+    mirror_only_flag: true
     mirror_switch: true
     theme_pack_choose:
     - 被遗忘者们
