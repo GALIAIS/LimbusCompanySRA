@@ -15,9 +15,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Ensure files are stable
+        run: |
+          echo "Waiting for file system stability..."
+          sleep 5 # Add a brief delay to avoid race conditions
+
       - name: Prepare workspace
         run: |
-          echo "Copying files to temp directory to avoid conflicts..."
+          echo "Copying files to a temporary directory..."
           mkdir -p temp_workspace
           rsync -av --exclude=".github" --exclude=".idea" ./ temp_workspace/
 
