@@ -14,7 +14,7 @@ jobs:
 
       - name: Create a ZIP archive
         run: |
-          zip -r source-code.zip . -x ".github/*" ".idea/*"
+          zip -r source-code.zip . -x ".github/*" ".idea/*" ".git/*"
 
       - name: Create a TAR.GZ archive
         run: |
