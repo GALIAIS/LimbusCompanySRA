@@ -8,17 +8,28 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Create a ZIP archive
+      - name: Prepare workspace
         run: |
-          zip -r source-code.zip . -x ".github/*" ".idea/*" ".git/*"
+          echo "Copying files to temp directory to avoid conflicts..."
+          mkdir -p temp_workspace
+          rsync -av --exclude=".github" --exclude=".idea" ./ temp_workspace/
 
-      - name: Create a TAR.GZ archive
+      - name: Create ZIP archive
         run: |
-          tar --exclude=".github" --exclude=".idea" -czvf source-code.tar.gz .
+          echo "Creating ZIP archive..."
+          zip -r temp_workspace/source-code.zip temp_workspace
+
+      - name: Create TAR.GZ archive
+        run: |
+          echo "Creating TAR.GZ archive..."
+          tar -czvf temp_workspace/source-code.tar.gz -C temp_workspace .
 
       - name: Create GitHub Release
         id: create_release
@@ -28,14 +39,12 @@ jobs:
           release_name: Release ${{ github.ref_name }}
           draft: false
           prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload ZIP Asset
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./source-code.zip
+          asset_path: ./temp_workspace/source-code.zip
           asset_name: source-code.zip
           asset_content_type: application/zip
 
@@ -43,6 +52,6 @@ jobs:
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./source-code.tar.gz
+          asset_path: ./temp_workspace/source-code.tar.gz
           asset_name: source-code.tar.gz
           asset_content_type: application/gzip
