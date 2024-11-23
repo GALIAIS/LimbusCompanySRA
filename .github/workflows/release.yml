@@ -38,6 +38,7 @@ jobs:
           echo "Creating tar.gz archive..."
           timestamp=$(date +'%Y%m%d%H%M%S')
           archive_name="source-code-${timestamp}.tar.gz"
+          ls -l
           tar -czvf $archive_name \
             --exclude=".github" \
             --exclude=".idea" \
