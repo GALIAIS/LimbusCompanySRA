@@ -34,7 +34,7 @@ jobs:
       - name: Create TAR.GZ archive
         run: |
           echo "Creating TAR.GZ archive..."
-          tar -czvf temp_workspace/source-code.tar.gz -C temp_workspace .
+          tar --warning=no-file-changed -czvf temp_workspace/source-code.tar.gz -C temp_workspace .
 
       - name: Create GitHub Release
         id: create_release
