@@ -139,8 +139,6 @@ def enter_wuthering_mirror():
 
 def choose_random_ego_gift():
     """随机选择E.G.O饰品"""
-    logger.info("开始随机选择E.G.O饰品")
-
     while True:
         cfg.img_event.wait(timeout=5)
         cfg.bboxes_event.wait(timeout=5)
@@ -174,8 +172,6 @@ def choose_random_ego_gift():
 
 def ego_gift_event():
     """选择E.G.O饰品"""
-    # logger.info("选择E.G.O饰品")
-
     while True:
         cfg.img_event.wait(timeout=10)
         cfg.bboxes_event.wait(timeout=10)
@@ -215,10 +211,6 @@ def ego_gift_event():
 
 def choose_encounter_reward_card():
     """选择遭遇战奖励卡"""
-    # logger.info("选择遭遇战奖励卡")
-    # cfg.img_event.wait(timeout=10)
-    # while text_exists(cfg.img_src, '选择遭遇战奖励卡') and text_exists(cfg.img_src, '遭遇战奖励卡指南'):
-    #     cfg.img_event.clear()
     while True:
         cfg.img_event.wait(timeout=10)
         cfg.bboxes_event.wait(timeout=10)
@@ -235,13 +227,6 @@ def choose_encounter_reward_card():
             cfg.img_event.clear()
             cfg.bboxes_event.clear()
             move_mouse_random()
-
-        # cfg.img_event.wait(timeout=10)
-        # cfg.bboxes_event.wait(timeout=10)
-        # if text_exists(cfg.img_src, r'获得.+饰品.*'):
-        #     check_label_and_click(cfg.bboxes, 'Confirm')
-        #     cfg.img_event.clear()
-        #     cfg.bboxes_event.clear()
 
         if not text_exists(cfg.img_src, '选择遭遇战奖励卡') and not text_exists(cfg.img_src, '遭遇战奖励卡指南'):
             break
@@ -282,10 +267,6 @@ def team_formation():
     logger.info("进入初始编队界面")
 
     try:
-        # cfg.img_event.wait(timeout=10)
-        # while text_exists(cfg.img_src, '播报员') and text_exists(cfg.img_src, '确认') and text_exists(cfg.img_src,
-        #                                                                                               '罪孽碎片'):
-        #     cfg.img_event.clear()
         while True:
             cfg.img_event.wait(timeout=10)
             cfg.bboxes_event.wait(timeout=10)
@@ -307,9 +288,7 @@ def team_formation():
 def choose_themes_pack():
     """选择主题卡包"""
     theme_packs = cfgm.get("Mirror_Dungeons.theme_pack_choose")
-    # cfg.img_event.wait(timeout=10)
-    # while text_exists(cfg.img_src, r'选择.+层主题卡包'):
-    #     cfg.img_event.clear()
+
     while True:
         for theme_pack in theme_packs:
             cfg.img_event.wait(timeout=10)
@@ -479,11 +458,6 @@ def shop_buy():
 
 def enter_event():
     """进入事件界面"""
-    # logger.info("进入战斗界面")
-
-    # cfg.img_event.wait(timeout=10)
-    # while text_exists(cfg.img_src, '通关奖励') or text_exists(cfg.img_src, '进入'):
-    #     cfg.img_event.clear()
     while True:
         cfg.img_event.wait(timeout=10)
         cfg.bboxes_event.wait(timeout=10)
@@ -502,9 +476,6 @@ def enter_event():
 def battle_choose_characters():
     """参战角色选择"""
     logger.info("参战角色选择界面")
-    # cfg.img_event.wait(timeout=10)
-    # while text_exists(cfg.img_src, r'可参战.*') and text_exists(cfg.img_src, '开始战斗'):
-    #     cfg.img_event.clear()
     while True:
 
         cfg.img_event.wait(timeout=5)
@@ -671,13 +642,6 @@ def abnormality_encounters_event():
 
 def check_mirror_completion() -> bool:
     """检查镜牢4是否完成"""
-    # cfg.img_event.wait(timeout=10)
-    # cfg.bboxes_event.wait(timeout=10)
-    # while text_exists(cfg.img_src, '战斗胜利') or text_exists(cfg.img_src, '累计造成伤害') or text_exists(
-    #         cfg.img_src, '探索完成') or text_exists(cfg.img_src, '总进度'):
-    #     check_label_and_click(cfg.bboxes, 'Confirm')
-    #     cfg.img_event.clear()
-    #     cfg.bboxes_event.clear()
     cfg.img_event.wait(timeout=10)
     if not any(text_exists(cfg.img_src, pattern) for pattern in [
         '战斗胜利', '累计造成伤害', '探索完成', '总进度', '探索结束奖励']):
@@ -788,7 +752,6 @@ def other_event():
 
 def run():
     """执行自动化流程"""
-
     def execute_process(process_name, switch_key, loop_count_key, process_func):
         current_count = 1
         is_switch_on = cfgm.get(switch_key)

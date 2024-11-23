@@ -28,7 +28,6 @@ Luxcavation:
         selected: 1
     thread_switch: false
 Mirror_Dungeons:
-    mirror_battle_count: 5
     mirror_loop_count: 1
     mirror_only_flag: true
     mirror_switch: true

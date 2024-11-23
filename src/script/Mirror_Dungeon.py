@@ -277,55 +277,5 @@ class Mirror_Wuthering:
                 and text_exists(cfg.img_src, '总进度')
         ) or text_exists(cfg.img_src, '探索结束奖励')
 
-    # def run(self):
-    #     """循环执行镜牢4流程"""
-    #     logger.info(f"开始执行镜牢4流程，循环次数: {self.loop_count}")
-    #     for _ in range(self.loop_count):
-    #         if not self.mirror_switch:
-    #             logger.info("镜牢4流程未开启")
-    #             break
-    #         try:
-    #             self.mirror_pass_flag = False
-    #             self.start_mirror_wuthering()
-    #             self.current_count += 1
-    #             logger.info(f"已完成第 {self.current_count} 次镜牢4")
-    #             logger.info(f"即将进入第 {self.current_count + 1} 次镜牢4")
-    #         except Exception as e:
-    #             logger.error(f"镜牢4流程出错: {e}")
-    #             logger.info("尝试回到主界面...")
-    #             return_to_main_menu()
-    #
-    #     logger.info(f"开始执行EXP副本流程，循环次数: {self.loop_count}")
-    #     for _ in range(int(cfgm.get("Luxcavation.exp_loop_count"))):
-    #         if not cfgm.get("Luxcavation.exp_switch"):
-    #             logger.info("EXP副本流程未开启")
-    #             break
-    #         try:
-    #             self.exp_pass_flag = False
-    #             self.start_mirror_wuthering()
-    #             self.current_count += 1
-    #             logger.info(f"已完成第 {self.current_count} 次EXP副本")
-    #             logger.info(f"即将进入第 {self.current_count + 1} 次EXP副本")
-    #         except Exception as e:
-    #             logger.error(f"EXP副本流程出错: {e}")
-    #             logger.info("尝试回到主界面...")
-    #             return_to_main_menu()
-    #
-    #     logger.info(f"开始执行Thread副本流程，循环次数: {self.loop_count}")
-    #     for _ in range(int(cfgm.get("Luxcavation.thread_loop_count"))):
-    #         if not cfgm.get("Luxcavation.thread_switch"):
-    #             logger.info("Thread副本流程未开启")
-    #             break
-    #         try:
-    #             self.thread_pass_flag = False
-    #             self.start_mirror_wuthering()
-    #             self.current_count += 1
-    #             logger.info(f"已完成第 {self.current_count} 次Thread副本")
-    #             logger.info(f"即将进入第 {self.current_count + 1} 次Thread副本")
-    #         except Exception as e:
-    #             logger.error(f"Thread副本流程出错: {e}")
-    #             logger.info("尝试回到主界面...")
-    #             return_to_main_menu()
-
 
 mw = Mirror_Wuthering()
