@@ -11,17 +11,17 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v3
         with:
           python-version: '3.12'
 
       - name: Cache Python dependencies
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-python-${{ hashFiles('requirements.txt') }}
@@ -48,7 +48,7 @@ jobs:
           echo "Created archive: $archive_name"
 
       - name: Upload tar.gz as build artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: source-code-archive
           path: source-code-${timestamp}.tar.gz
@@ -61,7 +61,7 @@ jobs:
           echo "Created zip: $zip_name"
 
       - name: Upload zip file as build artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: source-code-zip
           path: source-code-${timestamp}.zip
