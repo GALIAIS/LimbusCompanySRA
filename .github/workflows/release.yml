@@ -16,11 +16,6 @@ jobs:
         run: |
           zip -r source-code.zip . -x "*.git/*" "*.github/*" "*.idea/*" "*.pyc"
 
-      - name: Create a TAR.GZ archive with exclusions
-        run: |
-          # Using git ls-files to exclude files managed by git, including .git
-          git ls-files --exclude-standard -o -z | tar --warning=no-file-changed --null -czvf source-code.tar.gz --files-from=-
-
       - name: Create GitHub Release
         id: create_release
         uses: actions/create-release@v1
@@ -39,11 +34,3 @@ jobs:
           asset_path: ./source-code.zip
           asset_name: source-code.zip
           asset_content_type: application/zip
-
-      - name: Upload TAR.GZ Asset
-        uses: actions/upload-release-asset@v1
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./source-code.tar.gz
-          asset_name: source-code.tar.gz
-          asset_content_type: application/gzip
