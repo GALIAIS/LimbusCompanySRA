@@ -657,7 +657,7 @@ def check_label_text_and_drag(theme_pack: str, bboxes: list, label: str) -> None
     try:
         if bboxes:
             for bbox in bboxes:
-                if label_exists(bbox, Labels_ID[label]) and is_within(bbox, theme_pack):
+                if label_exists(bbox, Labels_ID[label]) and text_is_within(bbox, theme_pack):
                     move_to_center_and_dragR(bbox, direction='down')
                     break
     except Exception as e:
@@ -726,7 +726,7 @@ def getWindowShot():
 
 
 # 判断坐标是否在某个区域
-def is_within(bbox: list, text: str) -> bool:
+def text_is_within(bbox: list, text: str) -> bool:
     try:
         text_coordinates = get_text_coordinates(text)
         if bbox and text_coordinates:
@@ -742,6 +742,53 @@ def is_within(bbox: list, text: str) -> bool:
         return False
 
 
+def model_is_within(bboxes: list, text: str, label: float):
+    try:
+        text_coordinates = get_text_coordinates(text)
+        if not text_coordinates:
+            logger.warning("未找到文本的坐标")
+            return False
+
+        text_x0, text_y0, text_x1, text_y1 = map(float, [text_coordinates[0][0], text_coordinates[0][1],
+                                                         text_coordinates[2][0], text_coordinates[2][1]])
+        text_center = ((text_x0 + text_x1) / 2, (text_y0 + text_y1) / 2)
+        # logger.info(f"文本中心点: {text_center}")
+
+        nearest_button = None
+        min_distance = float('inf')
+
+        for idx, button_coordinates in enumerate(bboxes):
+            try:
+                if not label_exists(button_coordinates, label):
+                    continue
+
+                btn_x0, btn_y0, btn_x1, btn_y1 = map(float, button_coordinates[:4])
+                btn_center = ((btn_x0 + btn_x1) / 2, (btn_y0 + btn_y1) / 2)
+
+                distance = ((text_center[0] - btn_center[0]) ** 2 + (text_center[1] - btn_center[1]) ** 2) ** 0.5
+
+                # logger.debug(f"按钮 {idx}: {button_coordinates}, 距离: {distance:.2f}")
+
+                if distance < min_distance:
+                    min_distance = distance
+                    nearest_button = button_coordinates
+
+            except Exception as inner_e:
+                logger.warning(f"解析按钮 {idx} 时发生错误: {inner_e}")
+                continue
+
+        if nearest_button:
+            # logger.info(f"最近的按钮: {nearest_button}, 距离: {min_distance:.2f}")
+            return list(nearest_button)
+        else:
+            logger.warning("未找到符合条件的按钮")
+            return False
+
+    except Exception as e:
+        logger.error(f"处理按钮点击失败: {e}")
+        return False
+
+
 # 检查是否有坐标在 YOLO 模型坐标内
 # 返回包含坐标的bbox: [[x0, y0, x1, y1, conf, label_id]]
 def check_text_in_model(bboxes: list, text: str) -> list:
@@ -749,12 +796,32 @@ def check_text_in_model(bboxes: list, text: str) -> list:
         if bboxes:
             contained_coords = []
             for bbox in bboxes:
-                if is_within(bbox, text):
+                if text_is_within(bbox, text):
                     contained_coords.append(bbox)
             return contained_coords
     except Exception as e:
         logger.error(f"检查文本在模型内失败: {e}")
     return []
+
+
+# 选择bbox内距文本最近的另一bbox
+def check_model_click(bboxes: list, text: str, label: float) -> None:
+    try:
+        if bboxes:
+            bbox = model_is_within(bboxes, text, label)
+            click_center_of_bboxR(bbox)
+    except Exception as e:
+        logger.error(f"检查模型点击失败: {e}")
+
+
+def check_model_clickR(bboxes: list, text: str, label: float) -> None:
+    try:
+        if bboxes:
+            bbox = model_is_within(bboxes, text, label)
+            print(bbox)
+            click_center_of_bbox(bbox)
+    except Exception as e:
+        logger.error(f"检查模型点击失败: {e}")
 
 
 def wait_for_text(text: str) -> bool:
