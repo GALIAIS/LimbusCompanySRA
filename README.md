@@ -89,7 +89,7 @@ python LBCSRA.py
 
 ![基础设置](https://x.imgex.org/1/673add9957060.png)
 
-### 采光（暂不可用）
+### 采光（经验采光可用）
 
 ![采光](https://x.imgex.org/1/673add994a028.png)
 
