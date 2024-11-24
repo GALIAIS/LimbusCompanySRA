@@ -19,7 +19,7 @@ from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 
 if getattr(sys, 'frozen', False):
-    config_path = Path(sys.argv[0]).resolve().parents[2]
+    config_path = Path(sys.argv[0]).resolve().parents[0]
 else:
     config_path = Path(__file__).resolve().parents[2]
 

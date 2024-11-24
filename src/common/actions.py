@@ -5,8 +5,6 @@ from src.common.utils import *
 from src.app.utils.ConfigManager import cfgm
 from src.script.Luxcavation import luxcavation
 
-path = Path(__file__).resolve().parents[1]
-
 
 def navigate_to_luxcavation():
     logger.info("判断是否处于驾驶席界面...")
@@ -752,6 +750,7 @@ def other_event():
 
 def run():
     """执行自动化流程"""
+
     def execute_process(process_name, switch_key, loop_count_key, process_func):
         current_count = 1
         is_switch_on = cfgm.get(switch_key)

@@ -18,7 +18,7 @@ class Config:
     handle: int = 0
     pid: int = 0
     if getattr(sys, 'frozen', False):
-        base_path = Path(sys._MEIPASS)
+        base_path = Path(sys.argv[0]).resolve().parents
     else:
         base_path = Path(__file__).resolve().parents[1]
 

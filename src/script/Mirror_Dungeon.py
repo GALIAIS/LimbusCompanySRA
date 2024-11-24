@@ -39,7 +39,7 @@ event_handlers = {
 @define
 class Mirror_Wuthering:
     """镜牢4流程脚本"""
-    loop_count: int = int(cfgm.get("Mirror_Dungeons.mirror_loop_count"))
+    loop_count: int = cfgm.get("Mirror_Dungeons.mirror_loop_count")
     current_count: int = 0
     mirror_switch: bool = cfgm.get("Mirror_Dungeons.mirror_switch")
     mirror_pass_flag: bool = None

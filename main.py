@@ -24,11 +24,11 @@ def run_automation_task():
 
     img_thread = threading.Thread(target=imgsrc_update_thread, name="IMG更新线程", daemon=True)
     bbox_thread = threading.Thread(target=bboxes_update_thread, name="BBoxes更新线程", daemon=True)
-    mirror_wuthering = threading.Thread(target=run, name="Mirror Dungeon", daemon=True)
+    LBCSRA = threading.Thread(target=run, name="LBCSRA", daemon=True)
 
     img_thread.start()
     bbox_thread.start()
-    mirror_wuthering.start()
+    LBCSRA.start()
 
     while not stop_flag.is_set():
         time.sleep(0.5)
@@ -36,7 +36,7 @@ def run_automation_task():
     logger.info("正在停止任务")
     img_thread.join()
     bbox_thread.join()
-    mirror_wuthering.join()
+    LBCSRA.join()
     logger.info("任务已停止")
 
 

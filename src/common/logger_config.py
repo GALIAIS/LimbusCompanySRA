@@ -3,8 +3,8 @@ import traceback
 import uuid
 from datetime import datetime
 from pathlib import Path
-
 from loguru import logger
+from filelock import FileLock
 
 
 class LoggerConfig:
@@ -12,7 +12,7 @@ class LoggerConfig:
 
     def __init__(self):
         if getattr(sys, 'frozen', False):
-            self.file_dir = Path(sys.argv[0]).resolve().parent.parent
+            self.file_dir = Path(sys.argv[0]).resolve().parent
         else:
             self.file_dir = Path(__file__).resolve().parent.parent
 
@@ -24,11 +24,11 @@ class LoggerConfig:
         for path in self.log_dirs.values():
             path.mkdir(parents=True, exist_ok=True)
 
+        self.log_lock = FileLock(self.file_dir / 'log.lock')
         self.configure_logger()
 
     def configure_logger(self):
         """配置 loguru 日志"""
-
         logger.remove()
 
         log_format = (
@@ -40,9 +40,10 @@ class LoggerConfig:
 
         timestamp = datetime.now().strftime('%Y-%m-%d')
 
-        self.add_file_logger("log", log_format, timestamp, "DEBUG", "00:00", "7 days")
-        self.add_file_logger("error", log_format, timestamp, "WARNING", "10 MB", "30 days", "error")
-        self.add_file_logger("structured", log_format, timestamp, "DEBUG", "5 MB", "15 days", "structured", True)
+        with self.log_lock:
+            self.add_file_logger("log", log_format, timestamp, "DEBUG", "00:00", "7 days")
+            self.add_file_logger("error", log_format, timestamp, "WARNING", "10 MB", "30 days", "error")
+            self.add_file_logger("structured", log_format, timestamp, "DEBUG", "5 MB", "15 days", "structured", True)
 
         logger.add(sys.stdout, format=log_format, level="TRACE", colorize=True, enqueue=True)
 
@@ -52,10 +53,11 @@ class LoggerConfig:
 
     def add_file_logger(self, log_type, log_format, timestamp, level, rotation, retention, sub_dir=None,
                         serialize=False):
-        """为日志文件添加配置"""
         log_dir = self.log_dirs[log_type] if not sub_dir else self.log_dirs[sub_dir]
+        log_file = log_dir / f"{log_type}_{timestamp}.log"
+
         logger.add(
-            log_dir / f"{log_type}_{timestamp}.log",
+            str(log_file),
             rotation=rotation,
             retention=retention,
             level=level,
@@ -65,7 +67,6 @@ class LoggerConfig:
         )
 
     def configure_log_levels(self):
-        """配置日志级别和图标"""
         log_levels = {
             "TRACE": {"color": "<light-blue>", "icon": "🔍"},
             "DEBUG": {"color": "<blue>", "icon": "🐞"},

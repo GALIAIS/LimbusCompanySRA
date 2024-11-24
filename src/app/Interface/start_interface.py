@@ -9,7 +9,7 @@ from qfluentwidgets import (ScrollArea, Theme, qconfig, FluentIcon as FIF)
 from src.app.common.setting_card import PrimaryPushSettingCardX
 
 if getattr(sys, 'frozen', False):
-    BASE_DIR = Path(sys.argv[0]).resolve().parents[3]
+    BASE_DIR = Path(sys.argv[0]).resolve().parents[0]
 else:
     BASE_DIR = Path(__file__).resolve().parents[3]
 
