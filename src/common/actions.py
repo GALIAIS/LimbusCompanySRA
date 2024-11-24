@@ -89,7 +89,6 @@ def enter_wuthering_mirror():
             continue
 
         if text_exists(cfg.img_src, r'是否进入呼啸之镜.*'):
-            check_text_and_clickR("确认")
             check_label_and_click(cfg.bboxes, 'Confirm')
             logger.info("已进入呼啸之镜")
             cfg.img_event.clear()
@@ -137,6 +136,7 @@ def enter_wuthering_mirror():
 def choose_random_ego_gift():
     """随机选择E.G.O饰品"""
     while True:
+        moveto(0, 500)
         cfg.img_event.wait(timeout=5)
         cfg.bboxes_event.wait(timeout=5)
 
@@ -170,6 +170,7 @@ def choose_random_ego_gift():
 def ego_gift_event():
     """选择E.G.O饰品"""
     while True:
+        moveto(0, 500)
         cfg.img_event.wait(timeout=10)
         cfg.bboxes_event.wait(timeout=10)
         if text_exists(cfg.img_src, r'选择.+饰品') or text_exists(cfg.img_src, r'获得.+饰品.*') or text_exists(
@@ -206,10 +207,10 @@ def ego_gift_event():
 def choose_encounter_reward_card():
     """选择遭遇战奖励卡"""
     while True:
+        moveto(0, 500)
         cfg.img_event.wait(timeout=10)
         cfg.bboxes_event.wait(timeout=10)
         if text_exists(cfg.img_src, r'.*0/.*'):
-            move_mouse_random()
             check_label_and_click(cfg.bboxes, 'Encounter Reward Card')
             cfg.img_event.clear()
             cfg.bboxes_event.clear()
@@ -220,7 +221,6 @@ def choose_encounter_reward_card():
             check_label_and_click(cfg.bboxes, 'Confirm')
             cfg.img_event.clear()
             cfg.bboxes_event.clear()
-            move_mouse_random()
 
         if not text_exists(cfg.img_src, '选择遭遇战奖励卡') and not text_exists(cfg.img_src, '遭遇战奖励卡指南'):
             break
@@ -262,6 +262,7 @@ def team_formation():
 
     try:
         while True:
+            moveto(0, 500)
             cfg.img_event.wait(timeout=10)
             cfg.bboxes_event.wait(timeout=10)
             if text_exists(cfg.img_src, r'编队.*') and text_exists(cfg.img_src, '罪孽碎片'):
@@ -284,6 +285,7 @@ def choose_themes_pack():
     theme_packs = cfgm.get("Mirror_Dungeons.theme_pack_choose")
 
     while True:
+        moveto(0, 500)
         for theme_pack in theme_packs:
             cfg.img_event.wait(timeout=10)
             cfg.bboxes_event.wait(timeout=10)
@@ -338,8 +340,11 @@ def choose_path():
                 for label_id in NODE_PRIORITY
                 if label_id is not None and label_exists(bbox, label_id)
             ],
-            key=lambda x: x[0][0]
+            key=lambda x: (-x[1], x[0][0])
         )
+
+        # logger.debug(
+        #     f"检测到的节点列表（按优先级排序）: {[(Labels_ID.inverse.get(node[0][5], '未知'), node[1]) for node in available_nodes]}")
 
         if not available_nodes:
             logger.warning("未找到可点击的节点，尝试重新检测...")
@@ -353,7 +358,7 @@ def choose_path():
                     for label_id in NODE_PRIORITY
                     if label_id is not None and label_exists(bbox, label_id)
                 ],
-                key=lambda x: x[0][0]
+                key=lambda x: (-x[1], x[0][0])
             )
             if not available_nodes:
                 logger.error("多次尝试后仍未检测到可用节点，终止选择路径")
@@ -361,10 +366,11 @@ def choose_path():
 
         available_nodes = [
             node for node in available_nodes
-            if node_attempts.get(node[0][5], 0) < 3
+            if node_attempts.get(node[0][5], 0) < (5 if node[1] >= 3.0 else 3)
         ]
+
         if not available_nodes:
-            logger.warning("所有节点已尝试 3 次，无法继续选择")
+            logger.warning("所有节点已尝试上限，无法继续选择")
             break
 
         selected_node = available_nodes[0]
@@ -375,7 +381,8 @@ def choose_path():
             break
 
         node_attempts[node_id] = node_attempts.get(node_id, 0) + 1
-        logger.info(f"选择节点: {Labels_ID.inverse[node_id]}，尝试次数：{node_attempts[node_id]}")
+        # logger.info(
+        #     f"选择节点: {Labels_ID.inverse.get(node_id, '未知')}（优先级: {selected_node[1]}），尝试次数：{node_attempts[node_id]}")
 
         cfg.bboxes_event.wait(timeout=10)
         check_label_id_and_click(cfg.bboxes, node_id)
@@ -395,6 +402,7 @@ def choose_path():
 def shop_buy():
     """商店购买"""
     while True:
+        moveto(0, 500)
         cfg.img_event.wait(timeout=10)
         cfg.bboxes_event.wait(timeout=10)
 
@@ -403,7 +411,6 @@ def shop_buy():
 
         if text_exists(cfg.img_src, '治疗罪人') and not labels_exists(cfg.bboxes, Labels_ID['Event Option']):
             check_text_and_click('治疗罪人')
-            move_mouse_to_center()
             continue
 
         if any(text_exists(cfg.img_src, pattern) for pattern in [
@@ -453,6 +460,7 @@ def shop_buy():
 def enter_event():
     """进入事件界面"""
     while True:
+        moveto(0, 500)
         cfg.img_event.wait(timeout=10)
         cfg.bboxes_event.wait(timeout=10)
         if text_exists(cfg.img_src, '进入'):
@@ -471,7 +479,7 @@ def battle_choose_characters():
     """参战角色选择"""
     logger.info("参战角色选择界面")
     while True:
-
+        moveto(0, 500)
         cfg.img_event.wait(timeout=5)
         cfg.bboxes_event.wait(timeout=5)
         if not text_exists(cfg.img_src, '6/6') and text_exists(cfg.img_src, '开始战斗'):
@@ -639,6 +647,7 @@ def check_mirror_completion() -> bool:
     cfg.img_event.clear()
 
     while True:
+        moveto(0, 500)
         cfg.img_event.wait(timeout=10)
         cfg.bboxes_event.wait(timeout=10)
         if text_exists(cfg.img_src, '战斗胜利') and text_exists(cfg.img_src, '累计造成伤害') and text_exists(
