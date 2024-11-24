@@ -95,7 +95,7 @@ python LBCSRA.py
 
 ### 镜像迷宫
 
-![镜像迷宫](https://x.imgex.org/1/673add9957e92.png)
+![镜像迷宫](https://x.imgex.org/1/67429904c99da.png)
 
 ---
 
