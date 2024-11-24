@@ -82,8 +82,7 @@ def enter_wuthering_mirror():
             continue
 
         if text_exists(cfg.img_src, '迷宫进度'):
-            check_label_and_clickR(cfg.bboxes, 'Resume')
-            check_text_and_clickR("继续")
+            check_label_and_click(cfg.bboxes, 'Resume')
             logger.info("已恢复迷宫进度")
             cfg.img_event.clear()
             cfg.bboxes_event.clear()
@@ -186,7 +185,7 @@ def ego_gift_event():
         cfg.img_event.clear()
         cfg.bboxes_event.clear()
 
-        if labels_exists(cfg.bboxes, Labels_ID['Confirm']):
+        if labels_exists(cfg.bboxes, Labels_ID['Confirm']) and text_exists(cfg.img_src, 'E.G.O饰品信息'):
             check_label_and_click(cfg.bboxes, 'Confirm')
             cfg.img_event.clear()
             cfg.bboxes_event.clear()
@@ -323,7 +322,7 @@ def choose_path():
     cfg.img_event.wait(timeout=10)
     cfg.bboxes_event.wait(timeout=10)
 
-    while text_exists(cfg.img_src, r'正在探索.*') and not labels_exists(cfg.bboxes, Labels_ID['Enter']):
+    while text_exists(cfg.img_src, r'正在探索第.+层') and not labels_exists(cfg.bboxes, Labels_ID['Enter']):
         cfg.img_event.clear()
         cfg.bboxes_event.clear()
         mouse_scroll(-200)
