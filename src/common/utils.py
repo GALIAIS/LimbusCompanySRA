@@ -346,7 +346,7 @@ def text_exists(img_src: np.ndarray, text: str, flag: bool = False, confidence_t
 
         ocr_results = ocr_process(get_ocr_data(img_src))
         if flag:
-            print("OCR结果:", ocr_results)
+            logger.info("OCR结果:", ocr_results)
 
         try:
             pattern = re.compile(text)
@@ -818,7 +818,6 @@ def check_model_clickR(bboxes: list, text: str, label: float) -> None:
     try:
         if bboxes:
             bbox = model_is_within(bboxes, text, label)
-            print(bbox)
             click_center_of_bbox(bbox)
     except Exception as e:
         logger.error(f"检查模型点击失败: {e}")

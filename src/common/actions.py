@@ -175,7 +175,6 @@ def ego_gift_event():
         cfg.bboxes_event.wait(timeout=10)
         if text_exists(cfg.img_src, r'选择.+饰品') or text_exists(cfg.img_src, r'获得.+饰品.*') or text_exists(
                 cfg.img_src, 'E.G.O饰品信息'):
-            print("1")
             check_label_and_click(cfg.bboxes, 'E.G.O Gift')
             time.sleep(1)
             check_text_and_click(r'选择.+饰品', 2)
@@ -188,7 +187,6 @@ def ego_gift_event():
         cfg.bboxes_event.clear()
 
         if labels_exists(cfg.bboxes, Labels_ID['Confirm']):
-            print("2")
             check_label_and_click(cfg.bboxes, 'Confirm')
             cfg.img_event.clear()
             cfg.bboxes_event.clear()
@@ -199,7 +197,6 @@ def ego_gift_event():
         if not text_exists(cfg.img_src, r'选择.+饰品') and not text_exists(cfg.img_src,
                                                                            r'获得.+饰品.*') and not text_exists(
             cfg.img_src, 'E.G.O饰品信息'):
-            print("3")
             cfg.img_event.clear()
             cfg.bboxes_event.clear()
             break
@@ -586,12 +583,10 @@ def abnormality_encounters_event():
     try:
         while True:
             if labels_exists(cfg.bboxes, Labels_ID['Skip']):
-                print("1")
                 check_text_and_clickR(r'SKIP.*', clicks=10)
                 clear_events()
 
             if any(text_exists(cfg.img_src, cond) for cond in event_text_conditions):
-                print("2")
                 for text_condition in event_text_conditions:
                     if text_exists(cfg.img_src, text_condition):
                         check_text_and_click(text_condition)
@@ -599,14 +594,13 @@ def abnormality_encounters_event():
 
             if text_exists(cfg.img_src, "继续") or labels_exists(cfg.bboxes, Labels_ID['Continue']) or labels_exists(
                     cfg.bboxes, Labels_ID['Leava']):
-                print("3")
+                check_text_and_clickR("继续")
                 check_label_and_click(cfg.bboxes, 'Continue')
                 check_label_and_click(cfg.bboxes, 'Leava')
                 clear_events()
                 continue
 
             if text_exists(cfg.img_src, r"选择一位罪人来进行判定.*"):
-                print("4")
                 if text_exists(cfg.img_src, "极高") or labels_exists(cfg.bboxes, Labels_ID['Advantage-High']):
                     check_label_and_click(cfg.bboxes, 'Advantage-High')
                 elif text_exists(cfg.img_src, "高"):
@@ -615,14 +609,12 @@ def abnormality_encounters_event():
                 continue
 
             if text_exists(cfg.img_src, r"预计成功率.*") and labels_exists(cfg.bboxes, Labels_ID['Start']):
-                print("5")
                 check_label_and_click(cfg.bboxes, 'Start')
                 clear_events()
                 continue
 
             if (text_exists(cfg.img_src, "判定成功") or text_exists(cfg.img_src, "判定失败")) and not text_exists(
                     cfg.img_src, r"选择一位罪人来进行判定.*"):
-                print("6")
                 mouse_click(900, 510, 5, 1, 'left')
                 check_text_and_clickR(r'SKIP.*', clicks=10)
                 clear_events()
