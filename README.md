@@ -49,33 +49,96 @@
 - **Python 3.12 或以上版本**
 - **CUDA >= 11.8**
 
-### 🛠️ 安装步骤
+---
 
-#### 1️⃣ 克隆仓库
+### 🛠️ **安装步骤**
+
+#### **1️⃣ 克隆仓库**
 
 ```bash
 git clone https://github.com/GALIAIS/LimbusCompanySRA.git
 cd LimbusCompanySRA
 ```
 
-#### 2️⃣ 下载并配置 Python
+#### **2️⃣ 下载并配置 Python**
 
-1. 从 [Python 官方网站](https://www.python.org/downloads/) 下载 **3.12+ 版本**。
-2. 选择 **Windows Embeddable Package**，解压后将文件夹命名为 `python`。
-3. 修改解压文件夹中的 `.pth` 文件，将文件中 `import` 之前的 `#` 删除。
+1. 从 [Python 官方网站](https://www.python.org/downloads/) 下载 **Python 3.12+ 版本**。
+   - 推荐选择 **Windows embeddable package** 或普通安装包。
+2. 如果选择 **Windows embeddable package**：
+   - 解压文件到项目根目录，并将文件夹命名为 `python`。
+   - 打开 `python` 文件夹内的 `.pth` 文件（例如 `python312._pth`），找到以下行：
+     ```text
+     #import site
+     ```
+     - 删除行首的 `#`，使其变为：
+       ```text
+       import site
+       ```
+   - 保存文件。
 
-#### 3️⃣ 安装依赖
+#### **3️⃣ 创建虚拟环境（推荐）**
 
-1. 运行以下命令安装所需依赖：
+使用虚拟环境可以更好地管理项目依赖：
 
+1. 确保 Python 已安装在系统 PATH 中，或者已完成 embeddable package 配置。
+2. 创建虚拟环境：
+   ```bash
+   python -m venv .venv
+   ```
+   - 这将在当前目录下创建 `.venv` 文件夹作为虚拟环境。
+
+3. 激活虚拟环境：
+   - **Windows**：
+     ```bash
+     .venv\Scripts\activate
+     ```
+   - **Linux/Mac**：
+     ```bash
+     source .venv/bin/activate
+     ```
+4. 激活后，命令行前缀将显示 `(venv)`，表示虚拟环境已激活。
+
+#### **4️⃣ 安装依赖**
+
+1. 确保激活虚拟环境后运行以下命令：
    ```bash
    python -m pip install -r requirements.txt
    ```
 
-2. 依赖文件内的 `tensorrt-cu*-bindings`、`tensorrt-cu*_libs`请根据CUDA版本自行选择，`tensorrt-cu*_libs` 请使用`pip install --extra-index-url https://pypi.nvidia.com/ tensorrt-cu*-libs` 命令安装
-#### 4️⃣ 配置参数
+2. TensorRT 相关依赖说明：
+   - `requirements.txt` 中的 `tensorrt-cu*-bindings` 和 `tensorrt-cu*_libs` 是与 CUDA 版本相关的包，请根据你的 CUDA 版本选择合适的依赖。
+   - 推荐安装方式：
+     - 替换命令中的 `*` 为你的具体 CUDA 版本号，例如 `117`（代表 CUDA 11.7）或 `121`（代表 CUDA 12.1）。
+     ```bash
+     pip install --extra-index-url https://pypi.nvidia.com/ tensorrt-cu*-bindings tensorrt-cu*-libs
+     ```
 
-根据需求编辑 `config.py` 文件调整脚本参数。
+3. 如果你的显卡驱动不支持 TensorRT 或 CUDA，可以选择使用 CPU 模式（参考具体 TensorRT 文档配置）。
+
+#### **5️⃣ 项目运行**
+
+1. 确保虚拟环境已激活。
+2. 启动程序：
+   ```bash
+   python LBCSRA.py
+   ```
+
+---
+
+### ⚙️ **其他安装方法**
+
+#### **使用 Conda 环境**
+
+1. 安装 Conda（推荐 [Miniconda](https://docs.conda.io/en/latest/miniconda.html)）。
+2. 创建 Conda 环境：
+   ```bash
+   conda create -n limbus_env python=3.12 -y
+   conda activate limbus_env
+   ```
+3. 安装依赖：
+   ```bash
+   pip install -r requirements.txt
+   ```
 
 ---
 
