@@ -27,7 +27,7 @@ class YoloTRT:
             conf_thresh=kConfThresh
     ):
         self.trt_file = trt_plan
-        self.logger = trt.Logger(trt.Logger.INFO)
+        self.logger = trt.Logger(trt.Logger.ERROR)
         cudart.cudaSetDevice(gpu_id)
 
         self.nums_classes = num_classes
