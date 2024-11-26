@@ -1,6 +1,6 @@
 BaseSetting:
     Game_path: F:\SteamLibrary\steamapps\common\Limbus Company\LimbusCompany.exe
-    Model_path: I:\AI\LimbusCompany\LimbusCompanySRA\src\model\LBC.pt
+    Model_path: I:\AI\LimbusCompany\LimbusCompanySRA\src\model\LBC.plan
     Pip_path: F:\.virtualenvs\LimbusCompanySRA\Scripts\pip.exe
     Python_path: F:\.virtualenvs\LimbusCompanySRA\Scripts\python.exe
 Enkephalin:
@@ -15,8 +15,8 @@ Luxcavation:
         '6': 经验采光#6
         '7': 经验采光#7
         selected: 4
-    exp_switch: true
-    luxcavation_loop_count: 5
+    exp_switch: false
+    luxcavation_loop_count: 1
     thread_choose:
         '1': 傲慢
         '2': 嫉妒
@@ -29,8 +29,8 @@ Luxcavation:
     thread_switch: false
 Mirror_Dungeons:
     mirror_loop_count: 1
-    mirror_only_flag: false
-    mirror_switch: false
+    mirror_only_flag: true
+    mirror_switch: true
     theme_pack_choose:
     - 被遗忘者们
     - 无归属者
