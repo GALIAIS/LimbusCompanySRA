@@ -6,7 +6,6 @@ import random
 import re
 import threading
 import time
-
 import cv2
 import mss
 import numpy as np
@@ -18,19 +17,16 @@ import win32gui
 from attrs import define
 from loguru import logger
 from paddleocr import PaddleOCR
-from ultralytics import YOLO
-
-logging.disable(logging.DEBUG)
-
 from src.common.config import config as cfg
 from src.data.Labels import Labels_ID, LABELS, COLORS
+from src.common.tensorrt.infer import YoloTRT
 
-model = YOLO(cfg.model_path)
+# model = YOLO(cfg.model_path)
 
 img_lock = threading.Lock()
 ocr_lock = threading.Lock()
 bboxes_lock = threading.Lock()
-
+logging.disable(logging.DEBUG)
 """鼠标控制相关"""
 
 
@@ -178,7 +174,7 @@ def click_center_of_bboxR(bbox: list, clicks: int = 1, offset_ratio: tuple = (0.
             x0, y0, x1, y1 = map(float, bbox[:4])
             width, height = x1 - x0, y1 - y0
             x_offset = int(width * offset_ratio[0] + random.uniform(-20, 20))
-            y_offset = int(height * offset_ratio[1] + random.uniform(-20, 20))
+            y_offset = int(height * offset_ratio[1] + random.uniform(-20, 15))
             target_coords = (int((x0 + x1) / 2) + x_offset, int((y0 + y1) / 2) + y_offset)
             move_mouse_to(*get_mouse_pos(), *target_coords)
             mouse_click(*target_coords, clicks, interval=1, button="left")
@@ -278,7 +274,7 @@ def move_to_center_and_dragR(bbox: list, direction: str = 'down', distance: int 
 
 
 # 计算边界框的中心位置
-def center_of_bbox(bbox: list) -> tuple:
+def center_of_bbox(bbox: list):
     try:
         if bbox and isinstance(bbox[0], list):
             bbox = bbox[0]
@@ -334,40 +330,64 @@ def get_ocr_data(img_src: np.ndarray) -> list:
         return []
 
 
-import re
-import numpy as np
+def text_exists(
+        img_src: np.ndarray,
+        text: str,
+        flag: bool = False,
+        confidence_threshold: float = 0.8
+) -> bool:
+    """
+    检查给定图像中是否存在符合条件的文本。
 
+    Args:
+        img_src (np.ndarray): 输入图像，作为 OCR 处理的源数据。
+        text (str): 要匹配的目标文本（支持正则表达式）。
+        flag (bool): 是否打印详细日志信息，默认开启。
+        confidence_threshold (float): 匹配文本的置信度阈值，默认值为 0.8。
 
-def text_exists(img_src: np.ndarray, text: str, flag: bool = False, confidence_threshold: float = 0.8) -> bool:
+    Returns:
+        bool: 如果存在符合条件的文本，返回 True；否则返回 False。
+    """
     try:
-        if img_src is None:
-            logger.warning("文本检测失败: img_src 为空")
+        if img_src is None or not isinstance(img_src, np.ndarray):
+            logger.warning("文本检测失败: img_src 为空或类型错误")
+            return False
+
+        if not isinstance(text, str) or not text.strip():
+            logger.error(f"无效的文本输入: {text}")
+            return False
+
+        if not (0 <= confidence_threshold <= 1):
+            logger.error(f"无效的置信度阈值: {confidence_threshold}，应在 0 到 1 之间")
             return False
 
         ocr_results = ocr_process(get_ocr_data(img_src))
         if flag:
-            logger.info("OCR结果:", ocr_results)
+            logger.info(f"OCR 结果: {ocr_results}")
 
         try:
             pattern = re.compile(text)
-        except re.error:
-            logger.warning(f"无效的正则表达式: {text}，将对其进行转义处理")
+        except re.error as regex_error:
+            logger.warning(f"无效的正则表达式: {text} | 错误: {regex_error}")
             pattern = re.compile(re.escape(text))
 
         for res in ocr_results:
-            ocr_text = res['text']
-            confidence = res['confidence']
-            if confidence >= confidence_threshold and pattern.search(ocr_text):
+            ocr_text = res.get('text', '')
+            confidence = res.get('confidence', 0)
+            if confidence >= confidence_threshold:
                 if flag:
-                    logger.info(f"匹配成功: {ocr_text} | 置信度: {confidence}")
-                return True
+                    logger.info(f"当前 OCR 文本: {ocr_text} | 置信度: {confidence}")
+                if pattern.search(ocr_text):
+                    if flag:
+                        logger.info(f"匹配成功: {ocr_text} | 置信度: {confidence}")
+                    return True
 
         if flag:
             logger.info(f"匹配失败: 未找到符合条件的文本 | 输入: {text}")
         return False
+
     except Exception as e:
-        if flag:
-            logger.error(f"文本检测失败: {e} | 输入文本: {text}")
+        logger.error(f"文本检测失败: {e} | 输入文本: {text}")
         return False
 
 
@@ -517,7 +537,7 @@ class WindowManager:
 
     def get_pid(self):
         try:
-            self.pid = psutil.process_iter()
+            self.pid = str(psutil.process_iter())
             for self.process in self.pid:
                 if self.process.name() == cfg.window_process_name:
                     cfg.pid = self.process.pid
@@ -707,19 +727,20 @@ def labels_exists(bboxes: list, label_id: float) -> bool:
 
 def getWindowShot():
     try:
-        with mss.mss() as sct:
-            wm.window_info()
-            monitor = {
-                "top": cfg.m_top,
-                "left": cfg.m_left,
-                "width": cfg.m_width,
-                "height": cfg.m_height
-            }
-            if monitor["width"] > 0 and monitor["height"] > 0:
-                sct_img = sct.grab(monitor)
-                img_src = cv2.cvtColor(np.array(sct_img), cv2.COLOR_BGRA2BGR)
-                return img_src
+        wm.window_info()
+        monitor = {
+            "top": cfg.m_top,
+            "left": cfg.m_left,
+            "width": cfg.m_width,
+            "height": cfg.m_height
+        }
+        if monitor["width"] <= 0 or monitor["height"] <= 0:
+            logger.warning("窗口大小无效，无法截取截图")
             return None
+        with mss.mss() as sct:
+            sct_img = sct.grab(monitor)
+            img_src = cv2.cvtColor(np.array(sct_img), cv2.COLOR_BGRA2BGR)
+            return img_src
     except Exception as e:
         logger.error(f"获取窗口截图失败: {e}")
         return None
@@ -855,9 +876,12 @@ def wait_for_model_recognition(recognition_func) -> bool:
         return False
 
 
+# def window_update_data():
+#     cfg.img_src = getWindowShot()
+#     cfg.bboxes = getDetection(cfg.img_src)
 def window_update_data():
     cfg.img_src = getWindowShot()
-    cfg.bboxes = getDetection(cfg.img_src)
+    cfg.bboxes = getDetectionTRT(cfg.img_src)
 
 
 # 随机移动鼠标并更新数据
@@ -905,7 +929,7 @@ def yolo_inference():
             img = cfg.latest_img_src.copy() if cfg.latest_img_src is not None else None
 
         if img is not None and not np.array_equal(img, last_inference_img):
-            bboxes = getDetection(img)
+            bboxes = getDetectionTRT(img)
             with cfg.lock:
                 cfg.latest_bboxes = bboxes
 
@@ -918,13 +942,32 @@ def yolo_inference():
             break
 
 
-def getDetection(img_src: np.ndarray) -> list:
-    result = model.predict(img_src, conf=cfg.conf, iou=cfg.iou, half=cfg.half, device='cuda:0',
-                           max_det=cfg.max_det, vid_stride=cfg.vid_stride, agnostic_nms=cfg.agnostic_nms,
-                           classes=cfg.classes, verbose=cfg.verbose)
-    bbox = result[0].boxes
-    bboxes = bbox.data.tolist()
-    return bboxes
+# def getDetection(img_src: np.ndarray) -> list:
+#     result = model.predict(img_src, conf=cfg.conf, iou=cfg.iou, half=cfg.half, device='cuda:0',
+#                            max_det=cfg.max_det, vid_stride=cfg.vid_stride, agnostic_nms=cfg.agnostic_nms,
+#                            classes=cfg.classes, verbose=cfg.verbose)
+#     bbox = result[0].boxes
+#     bboxes = bbox.data.tolist()
+#     return bboxes
+
+
+def getDetectionTRT(img_src: np.ndarray) -> list:
+    """
+    使用 YoloDetector 类进行目标检测
+
+    Args:
+        img_src: 输入图像，numpy 数组
+
+    Returns:
+        检测到的边界框列表，每个边界框格式为 [x1, y1, x2, y2, conf, class_id]
+    """
+    detect_res = YoloTRT.inference(img_src)
+
+    if isinstance(detect_res, (np.ndarray, list)):
+        return detect_res.tolist()
+    else:
+        logger.error(f"Detection result is not in a valid format: {type(detect_res)}")
+        return []
 
 
 def getMonitor():
@@ -985,13 +1028,26 @@ def imgsrc_update_thread():
             logger.warning(f"imgsrc_update_thread 中的错误: {e}")
 
 
+# def bboxes_update_thread():
+#     """更新目标检测的边界框数据"""
+#     while True:
+#         try:
+#             if cfg.img_src is not None and np.any(cfg.img_src):
+#                 new_bboxes = getDetection(cfg.img_src)
+#                 if new_bboxes != cfg.bboxes:
+#                     cfg.bboxes = new_bboxes
+#                     cfg.bboxes_event.set()
+#             time.sleep(1)
+#         except Exception as e:
+#             logger.error(f"bbox_update_thread 中的错误: {e}")
+#             break
 def bboxes_update_thread():
     """更新目标检测的边界框数据"""
     while True:
         try:
-            if cfg.img_src is not None and cfg.img_src.any():
-                new_bboxes = getDetection(cfg.img_src)
-                if new_bboxes != cfg.bboxes:
+            if cfg.img_src is not None and cfg.img_src.size > 0:
+                new_bboxes = getDetectionTRT(cfg.img_src)
+                if not np.array_equal(new_bboxes, cfg.bboxes):
                     cfg.bboxes = new_bboxes
                     cfg.bboxes_event.set()
             time.sleep(1)

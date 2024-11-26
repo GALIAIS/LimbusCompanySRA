@@ -39,8 +39,36 @@ class Luxcavation:
             cfg.bboxes_event.clear()
 
     def Luxcavation_Thread(self):
-        thread_switch: bool = cfgm.get("Luxcavation.thread_switch")
-        thread_choose: int = cfgm.get("Luxcavation.thread_choose.selected")
+        thread_selected: str = str(cfgm.get("Luxcavation.thread_choose.selected"))
+        thread_choose: str = cfgm.get("Luxcavation.thread_choose")
+        while True:
+            cfg.img_event.wait(timeout=10)
+            cfg.bboxes_event.wait(timeout=10)
+            if (labels_exists(cfg.bboxes, Labels_ID['Drive'])
+                    and (not text_exists(cfg.img_src, '经验')
+                         or not text_exists(cfg.img_src, '纺锤'))):
+                self.navigate_to_luxcavation()
+                continue
+            cfg.img_event.clear()
+            cfg.bboxes_event.clear()
+
+            if text_exists(cfg.img_src, '纺锤') and not text_exists(cfg.img_src, r'经验采光.*'):
+                check_model_click(cfg.bboxes, thread_choose[thread_selected], Labels_ID['Enter'])
+                cfg.img_event.clear()
+                cfg.bboxes_event.clear()
+                continue
+            cfg.img_event.clear()
+            cfg.bboxes_event.clear()
+
+            if not text_exists(cfg.img_src, '经验') and not text_exists(cfg.img_src, '纺锤'):
+                self.battle_choose_characters()
+                self.start_battle()
+                self.check_mirror_completion()
+                cfg.img_event.clear()
+                cfg.bboxes_event.clear()
+                break
+            cfg.img_event.clear()
+            cfg.bboxes_event.clear()
 
     def start_battle(self):
         """战斗事件流程"""

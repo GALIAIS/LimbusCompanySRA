@@ -32,7 +32,7 @@ def find_pip(self, directory: str) -> Optional[str]:
 def find_model(self, directory: str) -> Optional[str]:
     for root, _, files in os.walk(directory):
         for file in files:
-            if re.match(r"^LBC(\.pt)?$", file, re.IGNORECASE):
+            if re.match(r"^LBC(\.plan)?$", file, re.IGNORECASE):
                 potential_path = os.path.join(root, file)
                 if sys.platform == "win32" and os.access(potential_path, os.X_OK):
                     return potential_path
