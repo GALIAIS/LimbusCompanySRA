@@ -2,13 +2,10 @@ import os
 import subprocess
 import sys
 from pathlib import Path
-from src.app.utils.ConfigManager import cfgm
-
 if getattr(sys, 'frozen', False):
     BASE_DIR = Path(sys.argv[0]).resolve().parent
 else:
     BASE_DIR = Path(os.path.abspath("."))
-
 sys.path.append(str(BASE_DIR))
 from PySide6.QtCore import QSize, QEventLoop, QTimer
 from PySide6.QtGui import QIcon
