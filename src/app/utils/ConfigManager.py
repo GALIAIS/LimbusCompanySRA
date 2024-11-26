@@ -6,17 +6,17 @@ from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional, Union, Callable, Dict, List
-
 # import cerberus
-import jsonschema
-import toml
+# import jsonschema
+# import toml
 import yaml
-from cryptography.fernet import Fernet, InvalidToken
+# from cryptography.fernet import Fernet, InvalidToken
 from loguru import logger
-from marshmallow import Schema, ValidationError as MarshmallowValidationError
+# from marshmallow import Schema, ValidationError as MarshmallowValidationError
 from pydantic import BaseModel, ValidationError
-from watchdog.events import FileSystemEventHandler
-from watchdog.observers import Observer
+
+# from watchdog.events import FileSystemEventHandler
+# from watchdog.observers import Observer
 
 if getattr(sys, 'frozen', False):
     config_path = Path(sys.argv[0]).resolve().parents[0]
@@ -48,7 +48,7 @@ class ValidationPlugin:
         raise NotImplementedError
 
 
-class FileHandler(FileSystemEventHandler):
+class FileHandler():
 
     def __init__(self, file_path: str, backup=False, encryption_key: Optional[bytes] = None,
                  validators: Optional[Dict[str, ValidationPlugin]] = None,
@@ -63,9 +63,9 @@ class FileHandler(FileSystemEventHandler):
         self.backup_interval = backup_interval
         self.last_backup_time = datetime.min
 
-        self.observer = Observer()
-        self.observer.schedule(self, str(self.file_path.parent), recursive=False)
-        self.observer.start()
+        # self.observer = Observer()
+        # self.observer.schedule(self, str(self.file_path.parent), recursive=False)
+        # self.observer.start()
 
     def set_file_path(self, file_path: str):
         try:
@@ -98,14 +98,14 @@ class FileHandler(FileSystemEventHandler):
                       encoding=None if self.encryption_key else 'utf-8') as file:
                 data = file.read()
 
-                if self.encryption_key:
-                    try:
-                        cipher_suite = Fernet(self.encryption_key)
-                        decrypted_data = cipher_suite.decrypt(data)
-                        data = decrypted_data.decode('utf-8')
-                    except InvalidToken as e:
-                        logger.error(f"解密文件时出错：{e}")
-                        raise ValueError("解密失败，请检查密钥或文件内容是否正确")
+                # if self.encryption_key:
+                #     try:
+                #         cipher_suite = Fernet(self.encryption_key)
+                #         decrypted_data = cipher_suite.decrypt(data)
+                #         data = decrypted_data.decode('utf-8')
+                #     except InvalidToken as e:
+                #         logger.error(f"解密文件时出错：{e}")
+                #         raise ValueError("解密失败，请检查密钥或文件内容是否正确")
 
                 if self.file_path.suffix == ".json":
                     loaded_data = json.loads(data)
@@ -150,14 +150,14 @@ class FileHandler(FileSystemEventHandler):
             else:
                 raise ValueError(f"不支持的文件格式：{self.file_path.suffix}")
 
-            if self.encryption_key:
-                cipher_suite = Fernet(self.encryption_key)
-                file_content = cipher_suite.encrypt(file_content.encode('utf-8'))
-                with open(self.file_path, 'wb') as file:
-                    file.write(file_content)
-            else:
-                with open(self.file_path, 'w', encoding='utf-8') as file:
-                    file.write(file_content)
+            # if self.encryption_key:
+            #     cipher_suite = Fernet(self.encryption_key)
+            #     file_content = cipher_suite.encrypt(file_content.encode('utf-8'))
+            #     with open(self.file_path, 'wb') as file:
+            #         file.write(file_content)
+            # else:
+            #     with open(self.file_path, 'w', encoding='utf-8') as file:
+            #         file.write(file_content)
 
             # logger.info(f"配置已保存到：{self.file_path}")
         except Exception as e:
@@ -462,9 +462,9 @@ class ConfigManager:
         elif file_format == 'json':
             with open(file_path, 'w', encoding='utf-8') as f:
                 json.dump(data, f, ensure_ascii=False, indent=4)
-        elif file_format == 'toml':
-            with open(file_path, 'w', encoding='utf-8') as f:
-                toml.dump(data, f)
+        # elif file_format == 'toml':
+        #     with open(file_path, 'w', encoding='utf-8') as f:
+        #         toml.dump(data, f)
         else:
             raise ValueError(f"不支持的文件格式：{file_format}")
 

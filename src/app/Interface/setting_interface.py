@@ -86,16 +86,16 @@ class SettingInterface(QScrollArea):
                 FIF.ADD, "模型路径", cfgm.get("BaseSetting.Model_path"), None, "BaseSetting.Model_path"
             )
 
-        self.state = "安装"
-        self.install_dependencies = PrimaryPushSettingCardX(f"{self.state}", FIF.PLAY, "安装依赖文件",
-                                                            "点击自动安装依赖文件")
-        self.install_dependencies.clicked.connect(self.on_install_dependencies)
+        # self.state = "安装"
+        # self.install_dependencies = PrimaryPushSettingCardX(f"{self.state}", FIF.PLAY, "安装依赖文件",
+        #                                                     "点击自动安装依赖文件")
+        # self.install_dependencies.clicked.connect(self.on_install_dependencies)
 
         self.Setting_Group.addSettingCard(self.select_python_path)
         self.Setting_Group.addSettingCard(self.select_pip_path)
         self.Setting_Group.addSettingCard(self.select_game_path)
         self.Setting_Group.addSettingCard(self.select_model_path)
-        self.Setting_Group.addSettingCard(self.install_dependencies)
+        # self.Setting_Group.addSettingCard(self.install_dependencies)
 
     def on_install_dependencies(self):
         process = QProcess()
