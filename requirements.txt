@@ -16,9 +16,6 @@ cuda-python~=12.6.2.post1
 tensorrt~=10.6.0.post1
 tensorrt-cu12-bindings~=10.6.0.post1
 tensorrt-cu12_libs~=10.6.0.post1
-paddleocr~=2.9.1
-paddlepaddle
-paddlepaddle-gpu
 PyAutoGUI-ng
 setuptools~=75.6.0
 filelock~=3.16.1
