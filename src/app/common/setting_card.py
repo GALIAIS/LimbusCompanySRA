@@ -147,7 +147,6 @@ class SwitchSettingCardX(SettingCardX):
         if config_key:
             self.setValue(cfgm.get(config_key))
 
-        # add switch button to layout
         self.hBoxLayout.addWidget(self.switchButton, 0, Qt.AlignRight)
         self.hBoxLayout.addSpacing(16)
 

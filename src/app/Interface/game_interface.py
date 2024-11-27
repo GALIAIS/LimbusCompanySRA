@@ -3,7 +3,7 @@ from pathlib import Path
 
 from PySide6.QtGui import (Qt, QIntValidator, QFont)
 from PySide6.QtWidgets import (QWidget, QStackedWidget, QLineEdit, QDialog, QCheckBox, QGridLayout, QComboBox, QSpinBox,
-                               QDialogButtonBox, QListWidget, QListWidgetItem)
+                               QDialogButtonBox, QListWidget, QListWidgetItem, QMessageBox, QGroupBox, QScrollArea)
 from loguru import logger
 from qfluentwidgets import (ScrollArea, Theme, qconfig, SegmentedWidget, SettingCardGroup, FluentIcon as FIF,
                             MessageBoxBase)
@@ -52,6 +52,7 @@ class GameInterface(ScrollArea):
         self.Mirror_Dungeons_Group.addSettingCard(self.mirror_switch)
         self.Mirror_Dungeons_Group.addSettingCard(self.mirror_only_flag)
         self.Mirror_Dungeons_Group.addSettingCard(self.mirror_loop_count)
+        # self.Mirror_Dungeons_Group.addSettingCard(self.sinner_choose)
         self.Mirror_Dungeons_Group.addSettingCard(self.theme_pack_choose)
         self.Luxcavation_Group.addSettingCard(self.luxcavation_loop_count)
         self.Luxcavation_Group.addSettingCard(self.luxcavation_exp_switch)
@@ -91,12 +92,18 @@ class GameInterface(ScrollArea):
         self.theme_pack_choose = PushSettingCardX("修改", FIF.INFO, "指定主题包",
                                                   f"{cfgm.get("Mirror_Dungeons.theme_pack_choose")}", None,
                                                   "Mirror_Dungeons.theme_pack_choose")
+        self.sinner_choose = PushSettingCardX("修改", FIF.INFO, "指定角色",
+                                              f"{cfgm.get("Mirror_Dungeons.sinner_choose")}", None,
+                                              "Mirror_Dungeons.sinner_choose")
         self.mirror_loop_count.clicked.connect(
             lambda: self.open_setting_dialog("Mirror_Dungeons.mirror_loop_count", self.mirror_loop_count,
                                              "设置循环次数",
                                              "请输入循环次数:", "LineEdit", validator=QIntValidator(1, 100)))
         self.theme_pack_choose.clicked.connect(
             lambda: self.open_theme_pack_dialog("Mirror_Dungeons.theme_pack_choose", self.theme_pack_choose))
+
+        self.sinner_choose.clicked.connect(
+            lambda: self.open_sinner_dialog("Mirror_Dungeons.sinner_choose", self.sinner_choose))
 
         self.Luxcavation_Group = SettingCardGroup("Luxcavation设置", self.scrollWidget)
         self.luxcavation_exp_switch = SwitchSettingCardX(FIF.FLAG, "经验副本循环", "是否开启经验副本循环",
@@ -160,12 +167,50 @@ class GameInterface(ScrollArea):
 
         selected_packs = cfgm.get(setting_key) or []
 
-        dialog = MultiSelectDialog("选择主题包", available_packs, selected_packs, parent=self.window())
+        layout_config = [
+            {"type": "list", "key": "theme_pack_list", "options": available_packs},
+        ]
+
+        dialog = CustomizableDialog("选择主题包", layout_config, parent=self.window())
+
+        theme_pack_list_widget = dialog.component_references.get("theme_pack_list")
+        if theme_pack_list_widget:
+            for i in range(theme_pack_list_widget.count()):
+                item = theme_pack_list_widget.item(i)
+                if item.text() in selected_packs:
+                    item.setSelected(True)
 
         if dialog.exec() == QDialog.DialogCode.Accepted:
-            selected_packs = dialog.getSelectedItems()
+            values = dialog.get_values()
+            selected_packs = values.get("theme_pack_list", [])
             cfgm.set(setting_key, selected_packs)
             formatted_content = ', '.join(selected_packs)
+            setting_card.setContent(formatted_content)
+
+    def open_sinner_dialog(self, setting_key, setting_card):
+        available_sinner = ['李箱', '浮士德', '堂吉诃德', '良秀', '默尔索', '鸿璐', '希斯克利夫',
+                            '以实玛利', '罗佳', '辛克莱', '奥提斯', '格里高尔']
+
+        selected_sinner = cfgm.get(setting_key) or []
+
+        layout_config = [
+            {"type": "list", "key": "sinner_list", "options": available_sinner},
+        ]
+
+        dialog = CustomizableDialog("选择角色", layout_config, parent=self.window())
+
+        sinner_list_widget = dialog.component_references.get("sinner_list")
+        if sinner_list_widget:
+            for i in range(sinner_list_widget.count()):
+                item = sinner_list_widget.item(i)
+                if item.text() in selected_sinner:
+                    item.setSelected(True)
+
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            values = dialog.get_values()
+            selected_sinner = values.get("sinner_list", [])
+            cfgm.set(setting_key, selected_sinner)
+            formatted_content = ', '.join(selected_sinner)
             setting_card.setContent(formatted_content)
 
     # def openMirrorLoopCountDialog(self):
@@ -284,37 +329,32 @@ class SettingDialog(QDialog):
         return True
 
 
-class MultiSelectDialog(QDialog):
-
-    def __init__(self, title, items, selected_items=None, parent=None):
+class CustomizableDialog(QDialog):
+    def __init__(self, title, layout_config, parent=None):
         super().__init__(parent=parent)
         self.setWindowTitle(title)
         self.setFixedSize(400, 400)
 
-        self.items = items
-        self.selected_items = selected_items or []
+        self.setWindowFlags(Qt.WindowType.Window | Qt.WindowType.WindowCloseButtonHint)
 
-        label = QLabel("请选择主题包：", self)
-        label.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        self.main_layout = QVBoxLayout(self)
 
-        self.list_widget = QListWidget(self)
-        self.list_widget.setSelectionMode(QListWidget.SelectionMode.MultiSelection)
+        self.scroll_area = QScrollArea(self)
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setFrameShape(QFrame.Shape.NoFrame)
+        self.inner_widget = QWidget()
+        self.inner_layout = QVBoxLayout(self.inner_widget)
 
-        for item in self.items:
-            list_item = QListWidgetItem(item)
-            font = QFont()
-            font.setPointSize(12)
-            font.setFamily("Arial")
-            list_item.setFont(font)
-            self.list_widget.addItem(list_item)
+        self.component_references = {}
 
-        for i in range(self.list_widget.count()):
-            item = self.list_widget.item(i)
-            if item.text() in self.selected_items:
-                item.setSelected(True)
+        self._build_layout(layout_config)
+
+        self.scroll_area.setWidget(self.inner_widget)
+        self.main_layout.addWidget(self.scroll_area)
 
         self.ok_button = QPushButton("确定", self)
         self.cancel_button = QPushButton("取消", self)
+
         self.ok_button.clicked.connect(self.accept)
         self.cancel_button.clicked.connect(self.reject)
 
@@ -322,11 +362,153 @@ class MultiSelectDialog(QDialog):
         button_layout.addStretch()
         button_layout.addWidget(self.ok_button)
         button_layout.addWidget(self.cancel_button)
+        self.main_layout.addLayout(button_layout)
 
-        layout = QVBoxLayout(self)
-        layout.addWidget(label)
-        layout.addWidget(self.list_widget)
-        layout.addLayout(button_layout)
+    def _style_button(self, button):
+        """
+        设置按钮样式
+        """
+        button.setFont(QFont("Arial", 12))
+        button.setStyleSheet(
+            f"""
+            QPushButton {{
+                border-radius: 5px;
+                padding: 5px 15px;
+            }}
+            """
+        )
 
-    def getSelectedItems(self):
-        return [item.text() for item in self.list_widget.selectedItems()]
+    def _darken_color(self, hex_color, factor=0.8):
+        """
+        根据十六进制颜色代码，返回变暗的颜色
+        """
+        rgb = tuple(int(hex_color[i:i + 2], 16) for i in (1, 3, 5))
+        dark_rgb = tuple(int(c * factor) for c in rgb)
+        return f"#{''.join(f'{x:02X}' for x in dark_rgb)}"
+
+    def _build_layout(self, layout_config):
+        """
+        动态构建布局。
+        """
+        for item in layout_config:
+            widget_type = item.get("type")
+            if widget_type == "label":
+                widget = QLabel(item.get("text", ""), self)
+                widget.setFont(QFont("Arial", 14))
+            elif widget_type == "list":
+                widget = QListWidget(self)
+                widget.setSelectionMode(QListWidget.SelectionMode.MultiSelection)
+                widget.setFont(QFont("Arial", 12))
+                for option in item.get("options", []):
+                    list_item = QListWidgetItem(option)
+                    list_item.setFont(QFont("Arial", 12))
+                    widget.addItem(list_item)
+            elif widget_type == "checkbox":
+                widget = QCheckBox(item.get("text", ""), self)
+                widget.setFont(QFont("Arial", 12))
+                widget.stateChanged.connect(
+                    lambda state, key=item.get("key"): self.toggle_extra_options(key, state)
+                )
+            elif widget_type == "input":
+                widget = QLineEdit(self)
+                widget.setFont(QFont("Arial", 12))
+                widget.setPlaceholderText(item.get("placeholder", ""))
+
+            elif widget_type == "group":
+                widget = self._create_group(item)
+            else:
+                continue
+
+            key = item.get("key")
+            if key:
+                self.component_references[key] = widget
+            self.inner_layout.addWidget(widget)
+
+    def _create_group(self, group_config):
+        """
+        创建分组组件。
+        """
+        group_box = QGroupBox(group_config.get("title", ""), self)
+        group_box.setFont(QFont("Arial", 12, QFont.Weight.Bold))
+
+        group_layout = QVBoxLayout(group_box)
+
+        for sub_item in group_config.get("items", []):
+            sub_widget = self._create_widget(sub_item)
+            if sub_widget:
+                group_layout.addWidget(sub_widget)
+
+        return group_box
+
+    def _create_widget(self, config):
+        """
+        创建单个控件
+        """
+        widget_type = config.get("type")
+        if widget_type == "label":
+            widget = QLabel(config.get("text", ""), self)
+            widget.setFont(QFont("Arial", 12))
+            return widget
+        elif widget_type == "checkbox":
+            widget = QCheckBox(config.get("text", ""), self)
+            widget.setFont(QFont("Arial", 12))
+            return widget
+        return None
+
+    def toggle_extra_options(self, key, state):
+        """
+        根据复选框状态动态切换额外选项的显示。
+        """
+        if state == Qt.CheckState.Checked and key not in self.component_references:
+            label = QLabel("额外选项：", self)
+            input_field = QLineEdit(self)
+            input_field.setPlaceholderText("请输入额外信息")
+            self.component_references[f"{key}_extra"] = (label, input_field)
+            self.inner_layout.addWidget(label)
+            self.inner_layout.addWidget(input_field)
+        elif state == Qt.CheckState.Unchecked and f"{key}_extra" in self.component_references:
+            label, input_field = self.component_references.pop(f"{key}_extra")
+            label.deleteLater()
+            input_field.deleteLater()
+
+    def validate_inputs(self):
+        """
+        校验输入是否合法。
+        """
+        for key, component in self.component_references.items():
+            if isinstance(component, QListWidget):
+                if not component.selectedItems():
+                    QMessageBox.warning(self, "警告", f"{key} 至少需要选择一个选项！")
+                    return False
+            elif isinstance(component, QLineEdit):
+                if not component.text().strip():
+                    QMessageBox.warning(self, "警告", f"{key} 不能为空！")
+                    return False
+        return True
+
+    def accept(self):
+        """
+        重写 accept 方法，增加校验逻辑。
+        """
+        if self.validate_inputs():
+            super().accept()
+
+    def apply_styles(self, qss):
+        """
+        应用 QSS 样式。
+        """
+        self.setStyleSheet(qss)
+
+    def get_values(self):
+        """
+        获取所有组件的值。
+        """
+        values = {}
+        for key, component in self.component_references.items():
+            if isinstance(component, QListWidget):
+                values[key] = [item.text() for item in component.selectedItems()]
+            elif isinstance(component, QLineEdit):
+                values[key] = component.text()
+            elif isinstance(component, QCheckBox):
+                values[key] = component.isChecked()
+        return values

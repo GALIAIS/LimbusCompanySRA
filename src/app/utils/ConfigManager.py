@@ -12,6 +12,7 @@ from typing import Any, Optional, Union, Callable, Dict, List
 import yaml
 # from cryptography.fernet import Fernet, InvalidToken
 from loguru import logger
+
 # from marshmallow import Schema, ValidationError as MarshmallowValidationError
 # from pydantic import BaseModel, ValidationError
 
@@ -160,6 +161,8 @@ class FileHandler():
             # else:
             #     with open(self.file_path, 'w', encoding='utf-8') as file:
             #         file.write(file_content)
+            with open(self.file_path, 'w', encoding='utf-8') as file:
+                file.write(file_content)
 
             # logger.info(f"配置已保存到：{self.file_path}")
         except Exception as e:
