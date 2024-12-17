@@ -651,6 +651,7 @@ def abnormality_encounters_event():
             cfg.bboxes_event.wait(timeout=10)
 
             if (text_exists(cfg.img_src, "SKIP") or
+                    labels_exists(cfg.bboxes, Labels_ID['Skip']) or
                     text_exists(cfg.img_src, r"\d{2}:\d{2}:\d{2}:\d{2}") or
                     any(text_exists(cfg.img_src, cond) for cond in event_text_conditions) or
                     text_exists(cfg.img_src, "继续") or
@@ -662,7 +663,10 @@ def abnormality_encounters_event():
                         cfg.img_src, r"选择一位罪人来进行判定.*"))):
 
                 if labels_exists(cfg.bboxes, Labels_ID['Skip']) or text_exists(cfg.img_src, "SKIP"):
-                    check_text_and_clickR(r'SKIP', 5)
+                    if text_exists(cfg.img_src, "SKIP"):
+                        check_text_and_clickR(r'SKIP', 5)
+                    else:
+                        mouse_click(900, 515, 5)
 
                 if any(text_exists(cfg.img_src, cond) for cond in event_text_conditions):
                     for text_condition in event_text_conditions:
@@ -683,7 +687,7 @@ def abnormality_encounters_event():
                     elif text_exists(cfg.img_src, "高"):
                         check_text_and_clickR(r"高")
 
-                if (text_exists(cfg.img_src, r"预计成功率.*") and labels_exists(cfg.bboxes, Labels_ID['Start'])):
+                if text_exists(cfg.img_src, r"预计成功率.*") and labels_exists(cfg.bboxes, Labels_ID['Start']):
                     check_label_and_click(cfg.bboxes, 'Start')
 
                 if (text_exists(cfg.img_src, "判定成功") or text_exists(cfg.img_src, "判定失败")) and not text_exists(

@@ -79,9 +79,9 @@ def drag_to(start_x, start_y, end_x, end_y, duration=0.5):
 
 
 # 鼠标单击
-def mouse_click(x, y, clicks=1, interval=0.0, button="left"):
+def mouse_click(x, y, click=1, interval=1, button="left"):
     try:
-        pdi.click(x, y, clicks, interval, button)
+        pdi.click(x, y, click, interval, button)
     except Exception as e:
         logger.error(f"鼠标单击失败: {e}")
 
@@ -147,7 +147,7 @@ def get_mouse_pos():
 #             mouse_click(target_coords[0], target_coords[1])
 #     except Exception as e:
 #         logger.error(f"点击边界框中心失败: {e}")
-def click_center_of_bbox(bbox: list, clicks: int = 1) -> None:
+def click_center_of_bbox(bbox: list, click: int = 1) -> None:
     """点击指定边界框的中心位置"""
     try:
         if bbox and isinstance(bbox[0], list):
@@ -155,7 +155,7 @@ def click_center_of_bbox(bbox: list, clicks: int = 1) -> None:
         x0, y0, x1, y1 = map(int, bbox[:4])
         target_coords = ((x0 + x1) // 2, (y0 + y1) // 2)
         move_mouse_to(*get_mouse_pos(), *target_coords)
-        mouse_click(*target_coords, clicks, interval=1, button="left")
+        mouse_click(*target_coords, click, interval=1, button="left")
     except IndexError:
         logger.error("边界框坐标不完整，无法执行点击操作")
     except Exception as e:
@@ -181,7 +181,7 @@ def click_center_of_bbox(bbox: list, clicks: int = 1) -> None:
 #             logger.warning("无效的边界框格式，无法点击")
 #     except Exception as e:
 #         logger.error(f"点击边界框中心失败: {e}")
-def click_center_of_bboxR(bbox: list, clicks: int = 1, offset_ratio: tuple = (0.05, 0.5)) -> None:
+def click_center_of_bboxR(bbox: list, click: int = 1, offset_ratio: tuple = (0.05, 0.5)) -> None:
     """点击边界框中心位置，带有偏移和随机微调"""
     try:
         if bbox and isinstance(bbox[0], list):
@@ -193,7 +193,7 @@ def click_center_of_bboxR(bbox: list, clicks: int = 1, offset_ratio: tuple = (0.
             y_offset = int(height * offset_ratio[1] + random.uniform(-20, 15))
             target_coords = (int((x0 + x1) / 2) + x_offset, int((y0 + y1) / 2) + y_offset)
             move_mouse_to(*get_mouse_pos(), *target_coords)
-            mouse_click(*target_coords, clicks, interval=1, button="left")
+            mouse_click(*target_coords, click, interval=1, button="left")
         else:
             logger.warning("无效的边界框格式，无法点击")
     except IndexError:
@@ -202,12 +202,12 @@ def click_center_of_bboxR(bbox: list, clicks: int = 1, offset_ratio: tuple = (0.
         logger.error(f"点击边界框中心失败: {e}")
 
 
-def click_center_of_text(coordinates: list, clicks: int = 1, interval: float = 0.1, button: str = "left") -> None:
+def click_center_of_text(coordinates: list, click: int = 1, interval: float = 0.1, button: str = "left") -> None:
     """
     点击指定文本区域的中心位置
 
     :param coordinates: 文本区域的四个角坐标，格式为[[x1, y1], [x2, y2], [x3, y3], [x4, y4]]
-    :param clicks: 鼠标点击次数，默认为1
+    :param click: 鼠标点击次数，默认为1
     :param interval: 每次点击之间的间隔时间（秒），默认0.1秒
     :param button: 鼠标点击按钮，默认为 "left"（可选 "right" 或 "middle"）
     """
@@ -224,11 +224,11 @@ def click_center_of_text(coordinates: list, clicks: int = 1, interval: float = 0
         center_y = sum(y_coords) // 4
         target_coords = (center_x, center_y)
 
-        # logger.debug(f"计算中心点坐标: {target_coords}, 点击次数: {clicks}, 间隔: {interval}s, 按钮: {button}")
+        # logger.debug(f"计算中心点坐标: {target_coords}, 点击次数: {click}, 间隔: {interval}s, 按钮: {button}")
 
         current_pos = get_mouse_pos()
         move_mouse_to(*current_pos, *target_coords)
-        mouse_click(*target_coords, clicks=clicks, interval=interval, button=button)
+        mouse_click(*target_coords, click=click, interval=interval, button=button)
 
         # logger.success(f"成功点击文本中心坐标: {target_coords}")
     except ValueError as ve:
@@ -237,11 +237,11 @@ def click_center_of_text(coordinates: list, clicks: int = 1, interval: float = 0
         logger.exception(f"点击文本中心失败: {e}")
 
 
-def click_center_of_textR(coordinates: list, clicks: int = 1, offset_ratio: tuple = (0.05, 0.05)) -> None:
+def click_center_of_textR(coordinates: list, click: int = 1, offset_ratio: tuple = (0.05, 0.05)) -> None:
     """
     点击指定文本区域的中心位置，带有偏移和随机微调
     :param coordinates: 文本区域的四个坐标点 [[x0, y0], [x1, y0], [x1, y1], [x0, y1]]
-    :param clicks: 点击次数，默认为1次
+    :param click: 点击次数，默认为1次
     :param offset_ratio: 偏移比例 (x_ratio, y_ratio)，默认为 (5%, 5%)
     """
     try:
@@ -266,9 +266,9 @@ def click_center_of_textR(coordinates: list, clicks: int = 1, offset_ratio: tupl
         target_coords = (int((x0 + x1) / 2) + x_offset, int((y0 + y1) / 2) + y_offset)
 
         move_mouse_to(*get_mouse_pos(), *target_coords)
-        mouse_click(*target_coords, clicks, interval=1, button="left")
+        mouse_click(*target_coords, click, interval=1, button="left")
 
-        # logger.info(f"点击文本区域中心成功: {target_coords}, 偏移比例: {offset_ratio}, 点击次数: {clicks}")
+        # logger.info(f"点击文本区域中心成功: {target_coords}, 偏移比例: {offset_ratio}, 点击次数: {click}")
 
     except ValueError as ve:
         logger.error(f"参数验证失败: {ve}")
@@ -309,9 +309,9 @@ def move_mouse_to_center():
 
 
 # 鼠标滚动
-def mouse_scroll(clicks=-10):
+def mouse_scroll(click=-10):
     try:
-        pdi.scroll(clicks)
+        pdi.scroll(click)
     except Exception as e:
         logger.error(f"鼠标滚动失败: {e}")
 
@@ -496,24 +496,24 @@ def exitOCRX():
 
 
 # PaddleOCR的获取数据函数
-def get_ocr_data(img_src: np.ndarray) -> list:
-    try:
-        if img_src is not None:
-            if not isinstance(img_src, np.ndarray):
-                raise ValueError("输入图像数据不是 numpy.ndarray 类型")
-            if img_src.size == 0:
-                raise ValueError("输入图像数据为空")
-            ocr_result = ocr.ocr(img_src, cls=True)
-            if not ocr_result or not isinstance(ocr_result, list):
-                raise ValueError("OCR 结果为空或格式不正确")
-            return ocr_result
-        return []
-    except IndexError as e:
-        logger.error(f"OCR 数据获取失败 - 索引错误: {e}")
-        return []
-    except Exception as e:
-        logger.error(f"OCR 数据获取失败: {e}")
-        return []
+# def get_ocr_data(img_src: np.ndarray) -> list:
+#     try:
+#         if img_src is not None:
+#             if not isinstance(img_src, np.ndarray):
+#                 raise ValueError("输入图像数据不是 numpy.ndarray 类型")
+#             if img_src.size == 0:
+#                 raise ValueError("输入图像数据为空")
+#             ocr_result = ocr.ocr(img_src, cls=True)
+#             if not ocr_result or not isinstance(ocr_result, list):
+#                 raise ValueError("OCR 结果为空或格式不正确")
+#             return ocr_result
+#         return []
+#     except IndexError as e:
+#         logger.error(f"OCR 数据获取失败 - 索引错误: {e}")
+#         return []
+#     except Exception as e:
+#         logger.error(f"OCR 数据获取失败: {e}")
+#         return []
 
 
 # PaddleOCR-json的获取数据函数
@@ -975,18 +975,18 @@ def check_text_and_clickR(text: str, click: int = 1):
         click_center_of_textR(ocr_coordinates, click)
 
 
-def check_text_in_model_and_click(pattern: str, clicks: int = 1):
+def check_text_in_model_and_click(pattern: str, click: int = 1):
     """匹配文本并点击对应的选项"""
     result_check = check_text_in_model(cfg.bboxes, pattern)
     if result_check:
-        click_center_of_bbox(result_check, clicks)
+        click_center_of_bbox(result_check, click)
 
 
-def check_text_in_model_and_clickR(pattern: str, clicks: int = 1):
+def check_text_in_model_and_clickR(pattern: str, click: int = 1):
     """匹配文本并点击对应的选项"""
     result_check = check_text_in_model(cfg.bboxes, pattern)
     if result_check:
-        click_center_of_bboxR(result_check, clicks)
+        click_center_of_bboxR(result_check, click)
 
 
 """OCR检测相关"""
@@ -1160,46 +1160,46 @@ class WindowManager:
 
 
 # 检查Label名称是否存在并移动鼠标点击按钮
-def check_label_and_click(bboxes: list, label: str, clicks: int = 1) -> None:
+def check_label_and_click(bboxes: list, label: str, click: int = 1) -> None:
     try:
         if bboxes:
             for bbox in bboxes:
                 if label_exists(bbox, Labels_ID[label]):
-                    click_center_of_bbox(bbox, clicks)
+                    click_center_of_bbox(bbox, click)
                     break
     except Exception as e:
         logger.error(f"检查标签失败: {e}")
 
 
-def check_label_and_clickR(bboxes: list, label: str, clicks: int = 1) -> None:
+def check_label_and_clickR(bboxes: list, label: str, click: int = 1) -> None:
     try:
         if bboxes:
             for bbox in bboxes:
                 if label_exists(bbox, Labels_ID[label]):
-                    click_center_of_bboxR(bbox, clicks)
+                    click_center_of_bboxR(bbox, click)
                     break
     except Exception as e:
         logger.error(f"检查标签失败: {e}")
 
 
 # 检查Label_ID是否存在并移动鼠标点击按钮
-def check_label_id_and_click(bboxes: list, label_id: float, clicks: int = 1) -> None:
+def check_label_id_and_click(bboxes: list, label_id: float, click: int = 1) -> None:
     try:
         if bboxes:
             for bbox in bboxes:
                 if label_exists(bbox, label_id):
-                    click_center_of_bbox(bbox, clicks)
+                    click_center_of_bbox(bbox, click)
                     break
     except Exception as e:
         logger.error(f"检查标签 ID 失败: {e}")
 
 
-def check_label_id_and_clickR(bboxes: list, label_id: float, clicks: int) -> None:
+def check_label_id_and_clickR(bboxes: list, label_id: float, click: int) -> None:
     try:
         if bboxes:
             for bbox in bboxes:
                 if label_exists(bbox, label_id):
-                    click_center_of_bboxR(bbox, clicks)
+                    click_center_of_bboxR(bbox, click)
                     break
     except Exception as e:
         logger.error(f"检查标签 ID 失败: {e}")
