@@ -5,7 +5,7 @@ from PySide6.QtGui import (Qt)
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QLabel)
 from loguru import logger
 from qfluentwidgets import (ScrollArea, Theme, qconfig, FluentIcon as FIF)
-
+from src.common.utils import *
 from src.app.common.setting_card import PrimaryPushSettingCardX
 
 if getattr(sys, 'frozen', False):
@@ -25,6 +25,7 @@ class StartInterface(ScrollArea):
         self.vBoxLayout = QVBoxLayout(self.scrollWidget)
 
         self.automation_manager = main.AutomationProcessManager()
+        self.automation_manager.process_finished_signal.connect(self.process_finished)
         self.initWidget()
         self.initCard()
         self.initLayout()
@@ -70,6 +71,10 @@ class StartInterface(ScrollArea):
         log_widget = QLabel(message)
         log_widget.setWordWrap(True)
         self.vBoxLayout.addWidget(log_widget)
+
+    def process_finished(self):
+        self.stop_game()
+        self.update_button_text()
 
     def addSubInterface(self, widget: QLabel, objectName: str, text: str):
         existing_widget = self.findChild(QLabel, objectName)

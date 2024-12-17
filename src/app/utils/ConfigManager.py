@@ -151,8 +151,6 @@ class FileHandler():
             else:
                 raise ValueError(f"不支持的文件格式：{self.file_path.suffix}")
 
-            with open(self.file_path, 'w', encoding='utf-8') as file:
-                file.write(file_content)
             # if self.encryption_key:
             #     cipher_suite = Fernet(self.encryption_key)
             #     file_content = cipher_suite.encrypt(file_content.encode('utf-8'))

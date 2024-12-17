@@ -1,5 +1,5 @@
+import atexit
 import os
-import subprocess
 import sys
 from pathlib import Path
 
@@ -11,13 +11,14 @@ else:
 sys.path.append(str(BASE_DIR))
 from PySide6.QtCore import QSize, QEventLoop, QTimer
 from PySide6.QtGui import QIcon
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QMessageBox
 from qfluentwidgets import (NavigationItemPosition, FluentIcon as FIF, MSFluentWindow,
                             setThemeColor, setTheme, Theme, SplashScreen)
 from src.app.Interface.game_interface import GameInterface
 from src.app.Interface.home_interface import HomeInterface
 from src.app.Interface.start_interface import StartInterface
 from src.app.Interface.setting_interface import SettingInterface
+from src.common.utils import is_process_running, kill_process
 
 
 class MainWindow(MSFluentWindow):
@@ -25,6 +26,7 @@ class MainWindow(MSFluentWindow):
         super().__init__()
         self.init_window()
         self.initInterface()
+        atexit.register(self.cleanup)
 
     def init_window(self):
         setThemeColor('#810000', lazy=True)
@@ -78,6 +80,34 @@ class MainWindow(MSFluentWindow):
         # self.addSubInterface(self.help_interface, FIF.APPLICATION, '帮助')
         # self.addSubInterface(self.update_interface, FIF.VIDEO, '更新', position=NavigationItemPosition.BOTTOM)
         self.addSubInterface(self.setting_interface, FIF.SETTING, '设置', position=NavigationItemPosition.BOTTOM)
+
+    def cleanup(self):
+        """
+        在程序退出时执行清理操作。
+        """
+        processes_to_kill = ["PaddleOCR-json.exe"]
+        for process_name in processes_to_kill:
+            if is_process_running(process_name):
+                kill_process(process_name)
+
+    # def closeEvent(self, event):
+    #     """
+    #     重写 closeEvent 方法，在主窗口关闭时执行清理操作。
+    #     """
+    #     processes_to_kill = ["PaddleOCR-json.exe"]
+    #     for process_name in processes_to_kill:
+    #         if is_process_running(process_name):
+    #             kill_process(process_name)
+    #
+    #     # 显示确认对话框 (可选)
+    #     if self.cfgm.get("UI.confirm_exit", True):
+    #         reply = QMessageBox.question(self, "确认退出", "确定要退出程序吗？",
+    #                                      QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+    #         if reply == QMessageBox.No:
+    #             event.ignore()
+    #             return
+    #
+    #     event.accept()
 
 
 if __name__ == '__main__':

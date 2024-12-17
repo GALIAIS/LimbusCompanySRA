@@ -126,7 +126,6 @@ class Luxcavation:
                 cfg.img_event.clear()
                 cfg.bboxes_event.clear()
                 break
-
             cfg.img_event.clear()
             cfg.bboxes_event.clear()
 
@@ -160,7 +159,6 @@ class Luxcavation:
 
     def battle_choose_characters(self):
         """参战角色选择"""
-        move_mouse_to_center()
         while True:
             cfg.img_event.wait(timeout=5)
             cfg.bboxes_event.wait(timeout=5)
@@ -186,7 +184,6 @@ class Luxcavation:
         logger.info("结束参战角色选择界面检测")
 
     def check_mirror_completion(self) -> bool:
-        move_mouse_to_center()
         cfg.img_event.wait(timeout=10)
         if not any(text_exists(cfg.img_src, pattern) for pattern in [
             '战斗胜利', '累计造成伤害', '探索完成', '总进度', '探索结束奖励', r'经理等级提升.*']):

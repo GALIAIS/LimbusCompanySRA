@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import sys
 from multiprocessing import Process, Event
+from PySide6.QtCore import Signal, QObject
 from pathlib import Path
 
 if getattr(sys, 'frozen', False):
@@ -22,25 +23,49 @@ stop_flag = Event()
 def run_automation_task():
     logger.info("任务启动")
 
-    img_thread = threading.Thread(target=imgsrc_update_thread, name="IMG更新线程", daemon=True)
-    bbox_thread = threading.Thread(target=bboxes_update_thread, name="BBoxes更新线程", daemon=True)
-    LBCSRA = threading.Thread(target=run, name="LBCSRA", daemon=True)
+    threads = [
+        threading.Thread(target=imgsrc_update_thread, name="IMG更新线程", daemon=True),
+        threading.Thread(target=bboxes_update_thread, name="BBoxes更新线程", daemon=True),
+        threading.Thread(target=run, name="LBCSRA", daemon=True)
+    ]
 
-    img_thread.start()
-    bbox_thread.start()
-    LBCSRA.start()
+    for thread in threads:
+        try:
+            thread.start()
+            logger.info(f"{thread.name} 已启动")
+        except Exception as e:
+            logger.error(f"线程 {thread.name} 启动失败: {e}")
+            stop_flag.set()
+            break
 
-    while not stop_flag.is_set():
-        time.sleep(0.5)
+    try:
+        while not stop_flag.is_set():
+            for thread in threads:
+                if not thread.is_alive():
+                    logger.warning(f"线程 {thread.name} 意外停止")
+                    stop_flag.set()
+                    break
+            time.sleep(1)
+    except Exception as e:
+        logger.error(f"主循环运行时发生异常: {e}", exc_info=True)
+    finally:
+        logger.info("正在停止所有线程...")
+        stop_flag.set()
+        for thread in threads:
+            thread.join(timeout=3)
+            if thread.is_alive():
+                logger.warning(f"线程 {thread.name} 未能正常退出")
+        logger.info("任务已完全停止")
 
-    logger.info("正在停止任务")
-    img_thread.join()
-    bbox_thread.join()
-    LBCSRA.join()
-    logger.info("任务已停止")
+
+class ProcessFinishedSignalEmitter(QObject):
+    process_finished_signal = Signal()
 
 
 class AutomationProcessManager:
+    process_finished_signal_emitter = ProcessFinishedSignalEmitter()
+    process_finished_signal = process_finished_signal_emitter.process_finished_signal
+
     def __init__(self):
         self.process = None
         self.restart_attempts = 3
@@ -54,6 +79,9 @@ class AutomationProcessManager:
         stop_flag.clear()
         self.process = Process(target=self._run_with_restart)
         self.process.start()
+
+        if is_process_running("PaddleOCR-json.exe"):
+            kill_process("PaddleOCR-json.exe")
         logger.info("任务已启动")
 
     def _run_with_restart(self):
@@ -61,6 +89,7 @@ class AutomationProcessManager:
             try:
                 logger.info(f"第 {self.current_attempt + 1} 次尝试运行任务")
                 run_automation_task()
+                AutomationProcessManager.process_finished_signal.emit()
                 break
             except Exception as e:
                 self.current_attempt += 1
@@ -82,6 +111,9 @@ class AutomationProcessManager:
             logger.info("任务已停止")
         else:
             logger.warning("没有正在运行的任务")
+
+        if is_process_running("PaddleOCR-json.exe"):
+            kill_process("PaddleOCR-json.exe")
         self.current_attempt = 0
 
     def is_running(self):

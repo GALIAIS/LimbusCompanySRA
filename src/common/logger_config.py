@@ -8,7 +8,7 @@ from filelock import FileLock
 
 
 class LoggerConfig:
-    """日志配置类"""
+    """增强版日志配置类"""
 
     def __init__(self):
         if getattr(sys, 'frozen', False):
@@ -19,7 +19,8 @@ class LoggerConfig:
         self.log_dirs = {
             "log": self.file_dir / 'log',
             "error": self.file_dir / 'log' / 'error',
-            "structured": self.file_dir / 'log' / 'structured'
+            "structured": self.file_dir / 'log' / 'structured',
+            "json": self.file_dir / 'log' / 'json'
         }
         for path in self.log_dirs.values():
             path.mkdir(parents=True, exist_ok=True)
@@ -41,32 +42,40 @@ class LoggerConfig:
         timestamp = datetime.now().strftime('%Y-%m-%d')
 
         with self.log_lock:
-            self.add_file_logger("log", log_format, timestamp, "DEBUG", "00:00", "7 days")
-            self.add_file_logger("error", log_format, timestamp, "WARNING", "10 MB", "30 days", "error")
+            # 添加多种日志文件
+            self.add_file_logger("log", log_format, timestamp, "DEBUG", "1 day", "7 days", compression="zip")
+            self.add_file_logger("error", log_format, timestamp, "WARNING", "10 MB", "30 days", compression="zip")
             self.add_file_logger("structured", log_format, timestamp, "DEBUG", "5 MB", "15 days", "structured", True)
+            self.add_file_logger("json", "{message}", timestamp, "DEBUG", "5 MB", "15 days", serialize=True)
 
-        logger.add(sys.stdout, format=log_format, level="TRACE", colorize=True, enqueue=True)
+        # 输出到终端
+        logger.add(sys.stdout, format=log_format, level="DEBUG", colorize=True, enqueue=True)
 
         self.configure_log_levels()
-
         sys.excepthook = self.log_exception
 
     def add_file_logger(self, log_type, log_format, timestamp, level, rotation, retention, sub_dir=None,
-                        serialize=False):
+                        serialize=False, compression=None):
+        """添加文件日志"""
         log_dir = self.log_dirs[log_type] if not sub_dir else self.log_dirs[sub_dir]
         log_file = log_dir / f"{log_type}_{timestamp}.log"
 
-        logger.add(
-            str(log_file),
-            rotation=rotation,
-            retention=retention,
-            level=level,
-            format=log_format,
-            serialize=serialize,
-            enqueue=True
-        )
+        try:
+            logger.add(
+                str(log_file),
+                rotation=rotation,
+                retention=retention,
+                level=level,
+                format=log_format,
+                serialize=serialize,
+                enqueue=True,
+                compression=compression
+            )
+        except Exception as e:
+            print(f"Failed to add logger: {e}")
 
     def configure_log_levels(self):
+        """设置日志级别和样式"""
         log_levels = {
             "TRACE": {"color": "<light-blue>", "icon": "🔍"},
             "DEBUG": {"color": "<blue>", "icon": "🐞"},
@@ -81,10 +90,10 @@ class LoggerConfig:
             logger.level(level, color=config["color"], icon=config["icon"])
 
     def log_exception(self, exc_type, exc_value, exc_traceback):
-        """异常捕获，输出详细的错误日志"""
+        """全局异常捕获"""
         if not issubclass(exc_type, KeyboardInterrupt):
             tb_str = ''.join(traceback.format_tb(exc_traceback))
-            logger.error(f"Uncaught exception: {exc_type.__name__}: {exc_value}\n{tb_str}")
+            logger.critical(f"Uncaught exception: {exc_type.__name__}: {exc_value}\n{tb_str}")
 
     def add_request_id(self):
         """为每个日志记录添加唯一的请求ID"""
@@ -95,3 +104,9 @@ class LoggerConfig:
         """添加请求 ID 后的日志记录方法"""
         self.add_request_id()
         logger.log(level, message)
+
+    def change_log_level(self, level):
+        """动态修改日志级别"""
+        logger.remove()
+        logger.add(sys.stdout, level=level, colorize=True, enqueue=True)
+        logger.info(f"Log level changed to {level}")

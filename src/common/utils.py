@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import base64
 import ctypes
 import json
 import logging
@@ -8,6 +9,8 @@ import tempfile
 import threading
 import time
 from pathlib import Path
+from typing import Union, Optional, List, Tuple
+
 import cv2
 import mss
 import numpy as np
@@ -18,13 +21,15 @@ import pywinctl as pwc
 import win32gui
 from attrs import define
 from loguru import logger
+from paddleocr import PaddleOCR
+
 # from paddleocr import PaddleOCR
 from src.app.utils.ConfigManager import cfgm
 from src.common.config import config as cfg
-from src.data.Labels import Labels_ID, LABELS, COLORS
 from src.common.tensorrt.infer import YoloTRT
 from src.common.paddleocr_json.PPOCR_api import GetOcrApi
 from src.common.paddleocr_json.tbpu import GetParser
+from src.data.Labels import Labels_ID, LABELS, COLORS
 
 # model = YOLO(cfg.model_path)
 root_path = Path(__file__).resolve().parents[2]
@@ -34,6 +39,11 @@ img_lock = threading.Lock()
 ocr_lock = threading.Lock()
 bboxes_lock = threading.Lock()
 logging.disable(logging.DEBUG)
+
+ocr = PaddleOCR(use_angle_cls=True, lang="ch")
+
+ocr_engine = None
+
 """鼠标控制相关"""
 
 
@@ -193,6 +203,80 @@ def click_center_of_bboxR(bbox: list, clicks: int = 1, offset_ratio: tuple = (0.
         logger.error(f"点击边界框中心失败: {e}")
 
 
+def click_center_of_text(coordinates: list, clicks: int = 1, interval: float = 0.1, button: str = "left") -> None:
+    """
+    点击指定文本区域的中心位置
+
+    :param coordinates: 文本区域的四个角坐标，格式为[[x1, y1], [x2, y2], [x3, y3], [x4, y4]]
+    :param clicks: 鼠标点击次数，默认为1
+    :param interval: 每次点击之间的间隔时间（秒），默认0.1秒
+    :param button: 鼠标点击按钮，默认为 "left"（可选 "right" 或 "middle"）
+    """
+    try:
+        if not isinstance(coordinates, list) or len(coordinates) != 4:
+            raise ValueError("坐标列表必须是包含四个点的列表，格式为 [[x1, y1], [x2, y2], [x3, y3], [x4, y4]]")
+        if not all(isinstance(point, list) and len(point) == 2 for point in coordinates):
+            raise ValueError("每个坐标点必须是包含两个整数的列表，例如 [x, y]")
+
+        x_coords = [point[0] for point in coordinates]
+        y_coords = [point[1] for point in coordinates]
+
+        center_x = sum(x_coords) // 4
+        center_y = sum(y_coords) // 4
+        target_coords = (center_x, center_y)
+
+        # logger.debug(f"计算中心点坐标: {target_coords}, 点击次数: {clicks}, 间隔: {interval}s, 按钮: {button}")
+
+        current_pos = get_mouse_pos()
+        move_mouse_to(*current_pos, *target_coords)
+        mouse_click(*target_coords, clicks=clicks, interval=interval, button=button)
+
+        # logger.success(f"成功点击文本中心坐标: {target_coords}")
+    except ValueError as ve:
+        logger.error(f"坐标验证失败: {ve}")
+    except Exception as e:
+        logger.exception(f"点击文本中心失败: {e}")
+
+
+def click_center_of_textR(coordinates: list, clicks: int = 1, offset_ratio: tuple = (0.05, 0.05)) -> None:
+    """
+    点击指定文本区域的中心位置，带有偏移和随机微调
+    :param coordinates: 文本区域的四个坐标点 [[x0, y0], [x1, y0], [x1, y1], [x0, y1]]
+    :param clicks: 点击次数，默认为1次
+    :param offset_ratio: 偏移比例 (x_ratio, y_ratio)，默认为 (5%, 5%)
+    """
+    try:
+        if not coordinates or len(coordinates) != 4:
+            raise ValueError("无效的坐标格式，必须为包含4个点的列表")
+
+        if not all(len(point) == 2 for point in coordinates):
+            raise ValueError("坐标点格式错误，每个点必须包含两个数值")
+
+        x0, y0 = map(float, coordinates[0])
+        x1, y1 = map(float, coordinates[2])
+
+        if x1 <= x0 or y1 <= y0:
+            raise ValueError("坐标范围错误，右下角点必须大于左上角点")
+
+        width = x1 - x0
+        height = y1 - y0
+
+        x_offset = int(width * offset_ratio[0] + random.uniform(-0.1 * width, 0.1 * width))
+        y_offset = int(height * offset_ratio[1] + random.uniform(-0.1 * height, 0.1 * height))
+
+        target_coords = (int((x0 + x1) / 2) + x_offset, int((y0 + y1) / 2) + y_offset)
+
+        move_mouse_to(*get_mouse_pos(), *target_coords)
+        mouse_click(*target_coords, clicks, interval=1, button="left")
+
+        # logger.info(f"点击文本区域中心成功: {target_coords}, 偏移比例: {offset_ratio}, 点击次数: {clicks}")
+
+    except ValueError as ve:
+        logger.error(f"参数验证失败: {ve}")
+    except Exception as e:
+        logger.error(f"点击文本区域中心失败: {e}")
+
+
 # 将鼠标移动到边界框的中心位置
 def move_to_center_of_bbox(bbox: list, offset_ratio: tuple = (0.05, 0.1)) -> None:
     try:
@@ -297,12 +381,6 @@ def center_of_bbox(bbox: list):
 """鼠标控制相关"""
 
 """OCR检测相关"""
-exePath = str(root_path / "src" / "3rdparty" / "PaddleOCR-json_v1.4.1" / "PaddleOCR-json.exe")
-modelsPath = str(root_path / "src" / "3rdparty" / "PaddleOCR-json_v1.4.1" / "models")
-configPath = str(root_path / "src" / "3rdparty" / "PaddleOCR-json_v1.4.1" / "models" / "config_chinese.txt")
-argument = {"config_path": configPath}
-# ocr = PaddleOCR(use_angle_cls=True, lang="ch")
-ocrx = GetOcrApi(exePath, modelsPath)
 
 
 # def get_ocr_data(img_src: np.ndarray) -> list:
@@ -322,98 +400,228 @@ ocrx = GetOcrApi(exePath, modelsPath)
 #         logger.error(f"OCR 数据获取失败: {e}")
 #         return []
 
-
-# PaddleOCR的获取数据函数
-# def get_ocr_data(img_src: np.ndarray) -> list:
+# def initOCRX(ocrx):
+#     """
+#     初始化 PaddleOCR-json OCR 引擎
+#     """
+#     exePath = root_path / "src" / "3rdparty" / "PaddleOCR-json" / "PaddleOCR-json.exe"
+#     modelsPath = root_path / "src" / "3rdparty" / "PaddleOCR-json" / "models"
+#     configPath = modelsPath / "config_chinese.txt"
+#     argument = {"config_path": str(configPath)}
+#
 #     try:
-#         if img_src is not None:
-#             if not isinstance(img_src, np.ndarray):
-#                 raise ValueError("输入图像数据不是 numpy.ndarray 类型")
-#             if img_src.size == 0:
-#                 raise ValueError("输入图像数据为空")
-#             ocr_result = ocr.ocr(img_src, cls=True)
-#             if not ocr_result or not isinstance(ocr_result, list):
-#                 raise ValueError("OCR 结果为空或格式不正确")
-#             return ocr_result
-#         return []
-#     except IndexError as e:
-#         logger.error(f"OCR 数据获取失败 - 索引错误: {e}")
-#         return []
+#         ocrx = GetOcrApi(str(exePath))
+#         return ocrx
 #     except Exception as e:
-#         logger.error(f"OCR 数据获取失败: {e}")
-#         return []
+#         logger.error(f"初始化 OCR 失败: {e}")
+#         ocrx = None
+#         raise
 
-
-def save_temp_image(img_src: np.ndarray) -> str:
+def initOCRX():
     """
-    将 numpy.ndarray 图像保存为临时文件，并返回文件路径。
-
-    :param img_src: 输入的 numpy.ndarray 图像
-    :return: 临时文件路径
+    初始化 PaddleOCR-json OCR 引擎
     """
-    temp_file = tempfile.NamedTemporaryFile(suffix=".jpg", delete=False)
-    cv2.imwrite(temp_file.name, img_src)
-    return temp_file.name
+    global ocr_engine
+    if ocr_engine is not None:
+        return
+
+    exePath = root_path / "src" / "3rdparty" / "PaddleOCR-json" / "PaddleOCR-json.exe"
+    modelsPath = root_path / "src" / "3rdparty" / "PaddleOCR-json" / "models"
+    configPath = modelsPath / "config_chinese.txt"
+    argument = {"config_path": str(configPath)}
+
+    try:
+        ocr_engine = GetOcrApi(str(exePath))
+    except Exception as e:
+        logger.error(f"初始化 OCR 失败: {e}")
+        ocr_engine = None
+        raise
 
 
 # PaddleOCR-json的获取数据函数
-def get_ocrx_data(img_src: np.ndarray) -> dict:
+def get_ocrx_data(img_src, input_type="ndarray") -> dict:
     """
-    从 OCR 模型中获取检测结果并验证数据格式。
+    使用 PaddleOCR-json 引擎获取 OCR 检测结果。
 
-    :param img_src: 输入图像的 numpy.ndarray 格式
-    :return: 包含 OCR 检测结果的字典或空字典
+    :param img_src: 输入图像数据，可以是 ndarray、字节流、Base64 字符串或路径。
+    :param input_type: 输入图像类型，可选值为 'ndarray', 'bytes', 'base64', 'path'。
+    :return: 包含 OCR 检测结果的字典，格式正确则返回数据；未检测到文字时返回空字典。
     """
+    global ocr_engine
     try:
-        if img_src is None:
-            raise ValueError("输入图像数据为空")
-        if not isinstance(img_src, np.ndarray):
-            raise ValueError("输入图像数据不是 numpy.ndarray 类型")
-        if img_src.size == 0:
-            raise ValueError("输入图像数据为空")
+        validate_input(img_src, input_type)
 
-        temp_file_path = save_temp_image(img_src)
+        if ocr_engine is None:
+            initOCRX()
+            if ocr_engine is None:
+                raise RuntimeError("OCR 引擎初始化失败")
 
-        ocr_result = ocrx.run(temp_file_path)
+        # logger.debug(f"OCR 输入类型: {input_type}")
 
-        if not ocr_result or not isinstance(ocr_result, dict):
-            raise ValueError("OCR 结果为空或格式不正确")
-        if "code" not in ocr_result or "data" not in ocr_result:
-            raise ValueError("OCR 返回的数据结构不完整")
-        if ocr_result["code"] != 100:
-            raise ValueError(f"OCR 执行失败，状态码: {ocr_result['code']}")
+        if input_type == "ndarray":
+            _, img_bytes = cv2.imencode('.png', img_src)
+            ocr_result = ocr_engine.runBytes(img_bytes.tobytes())
+        elif input_type == "bytes":
+            ocr_result = ocr_engine.runBytes(img_src)
+        elif input_type == "base64":
+            ocr_result = ocr_engine.runBase64(img_src)
+        elif input_type == "path":
+            ocr_result = ocr_engine.run(img_src)
+        else:
+            raise ValueError(f"不支持的 input_type: {input_type}")
 
-        data = ocr_result["data"]
-        if not isinstance(data, list):
-            raise ValueError("OCR 数据格式错误，data 应为列表类型")
+        if ocr_result.get("code") == 101:
+            return {}
 
-        for item in data:
-            if not isinstance(item, dict):
-                raise ValueError("OCR 数据项格式错误，item 应为字典类型")
-            if "box" not in item or "text" not in item or "score" not in item:
-                raise ValueError("OCR 数据项缺少必要字段")
-            if not isinstance(item["box"], list) or len(item["box"]) != 4:
-                raise ValueError(f"OCR 检测框格式错误: {item['box']}")
-            if not isinstance(item["text"], str):
-                raise ValueError(f"OCR 文本格式错误: {item['text']}")
-            if not isinstance(item["score"], (float, int)):
-                raise ValueError(f"OCR 置信度格式错误: {item['score']}")
-
-        return ocr_result
+        return validate_ocr_result(ocr_result)
 
     except ValueError as e:
-        logger.error(f"OCR 数据验证失败: {e}")
-        return {}
+        logger.error(f"OCR 输入数据验证失败: {e}")
+    except RuntimeError as e:
+        logger.error(f"OCR 引擎运行失败: {e}")
+    except Exception as e:
+        logger.error(f"OCR 数据处理失败: {e}")
+
+
+# 在程序结束时退出 OCR 引擎
+def exitOCRX():
+    """
+    退出 PaddleOCR-json OCR 引擎
+    """
+    global ocr_engine
+    if ocr_engine is not None:
+        try:
+            ocr_engine.exit()
+        except Exception as cleanup_error:
+            logger.warning(f"释放 OCR 引擎资源时出现问题: {cleanup_error}")
+
+
+# PaddleOCR的获取数据函数
+def get_ocr_data(img_src: np.ndarray) -> list:
+    try:
+        if img_src is not None:
+            if not isinstance(img_src, np.ndarray):
+                raise ValueError("输入图像数据不是 numpy.ndarray 类型")
+            if img_src.size == 0:
+                raise ValueError("输入图像数据为空")
+            ocr_result = ocr.ocr(img_src, cls=True)
+            if not ocr_result or not isinstance(ocr_result, list):
+                raise ValueError("OCR 结果为空或格式不正确")
+            return ocr_result
+        return []
+    except IndexError as e:
+        logger.error(f"OCR 数据获取失败 - 索引错误: {e}")
+        return []
     except Exception as e:
         logger.error(f"OCR 数据获取失败: {e}")
-        return {}
+        return []
 
 
+# PaddleOCR-json的获取数据函数
+# def get_ocrx_data(img_src, input_type="ndarray") -> dict:
+#     """
+#     使用 PaddleOCR-json 引擎获取 OCR 检测结果。
+#
+#     :param img_src: 输入图像数据，可以是 ndarray、字节流、Base64 字符串或路径。
+#     :param input_type: 输入图像类型，可选值为 'ndarray', 'bytes', 'base64', 'path'。
+#     :return: 包含 OCR 检测结果的字典，格式正确则返回数据；未检测到文字时返回空字典。
+#     """
+#     ocr_engine = None
+#     try:
+#         validate_input(img_src, input_type)
+#
+#         ocr_engine = initOCRX(ocr_engine)
+#         if ocr_engine is None:
+#             raise RuntimeError("OCR 引擎初始化失败")
+#
+#         # logger.debug(f"OCR 输入类型: {input_type}")
+#
+#         if input_type == "ndarray":
+#             _, img_bytes = cv2.imencode('.png', img_src)
+#             ocr_result = ocr_engine.runBytes(img_bytes.tobytes())
+#         elif input_type == "bytes":
+#             ocr_result = ocr_engine.runBytes(img_src)
+#         elif input_type == "base64":
+#             ocr_result = ocr_engine.runBase64(img_src)
+#         elif input_type == "path":
+#             ocr_result = ocr_engine.run(img_src)
+#         else:
+#             raise ValueError(f"不支持的 input_type: {input_type}")
+#
+#         if ocr_result.get("code") == 101:
+#             return {}
+#
+#         return validate_ocr_result(ocr_result)
+#
+#     except ValueError as e:
+#         logger.error(f"OCR 输入数据验证失败: {e}")
+#     except RuntimeError as e:
+#         logger.error(f"OCR 引擎运行失败: {e}")
+#     except Exception as e:
+#         logger.error(f"OCR 数据处理失败: {e}")
+#     finally:
+#         if ocr_engine is not None:
+#             try:
+#                 ocr_engine.exit()
+#             except Exception as cleanup_error:
+#                 logger.warning(f"释放 OCR 引擎资源时出现问题: {cleanup_error}")
+#     return {}
+
+
+def validate_input(img_src, input_type):
+    """
+    验证输入的图像数据和类型是否符合要求。
+
+    :param img_src: 输入图像数据。
+    :param input_type: 输入图像类型。
+    :raises ValueError: 如果输入无效。
+    """
+    if input_type == "ndarray" and not isinstance(img_src, np.ndarray):
+        raise ValueError("输入类型为 'ndarray' 时，img_src 必须是 numpy.ndarray")
+    if input_type == "bytes" and not isinstance(img_src, (bytes, bytearray)):
+        raise ValueError("输入类型为 'bytes' 时，img_src 必须是字节流对象")
+    if input_type == "base64" and not isinstance(img_src, str):
+        raise ValueError("输入类型为 'base64' 时，img_src 必须是 Base64 编码字符串")
+    if input_type == "path" and not isinstance(img_src, str):
+        raise ValueError("输入类型为 'path' 时，img_src 必须是字符串路径")
+
+
+def validate_ocr_result(ocr_result):
+    """
+    验证 OCR 返回结果格式是否正确。
+
+    :param ocr_result: OCR 返回的数据。
+    :return: 验证通过的 OCR 结果。
+    :raises ValueError: 如果结果格式不符合要求。
+    """
+    if not ocr_result or not isinstance(ocr_result, dict):
+        raise ValueError("OCR 结果为空或格式不正确")
+    if ocr_result.get("code") != 100:
+        raise ValueError(f"OCR 执行失败，状态码: {ocr_result.get('code')}")
+    if "data" not in ocr_result or not isinstance(ocr_result["data"], list):
+        raise ValueError("OCR 返回的数据结构不完整")
+
+    for item in ocr_result["data"]:
+        if not isinstance(item, dict):
+            raise ValueError(f"OCR 数据项格式错误: {item}")
+        if not all(k in item for k in ["box", "text", "score"]):
+            raise ValueError(f"OCR 数据项缺少必要字段: {item}")
+        if not isinstance(item["box"], list) or len(item["box"]) != 4:
+            raise ValueError(f"OCR 检测框格式错误: {item['box']}")
+        if not isinstance(item["text"], str):
+            raise ValueError(f"OCR 文本格式错误: {item['text']}")
+        if not isinstance(item["score"], (float, int)):
+            raise ValueError(f"OCR 置信度格式错误: {item['score']}")
+
+    return ocr_result
+
+
+# 单文本检测
 def text_exists(
         img_src: np.ndarray,
         text: str,
         flag: bool = False,
-        confidence_threshold: float = 0.8
+        confidence_threshold: float = 0.5
 ) -> bool:
     """
     检查给定图像中是否存在符合条件的文本。
@@ -470,17 +678,163 @@ def text_exists(
         return False
 
 
-# 获取ocr_text的坐标
-def get_text_coordinates(text: str) -> list:
+# 多文本列表检测
+def text_list_exists(
+        img_src: np.ndarray,
+        patterns: list,
+        flag: bool = False,
+        confidence_threshold: float = 0.5,
+        match_mode: str = "any",
+        return_details: bool = False,
+        ignore_case: bool = True
+) -> Union[bool, list, dict]:
+    """
+    检查给定图像中是否存在符合条件的文本列表中任意一个，并支持返回详细匹配信息。
+
+    Args:
+        img_src (np.ndarray): 输入图像，作为 OCR 处理的源数据。
+        patterns (list): 要匹配的目标文本列表（支持正则表达式）。
+        flag (bool): 是否打印详细日志信息，默认关闭。
+        confidence_threshold (float): 匹配文本的置信度阈值，默认值为 0.8。
+        match_mode (str): 匹配模式，可选 "all"（所有模式必须匹配）或 "any"（任意一个模式即可匹配）或 "not"（反向匹配）。
+        return_details (bool): 是否返回详细匹配信息，默认返回布尔值。
+        ignore_case (bool): 是否忽略大小写匹配，默认为 True。
+
+    Returns:
+        Union[bool, list, dict]:
+            - 如果 `return_details=False`，返回布尔值表示是否存在匹配。
+            - 如果 `return_details=True`，返回匹配的详细信息列表或空列表。
+    """
     try:
-        img_src = getWindowShot()
-        if img_src is not None:
-            result = ocrx_process(get_ocrx_data(img_src))
+        if img_src is None or not isinstance(img_src, np.ndarray):
+            logger.warning("文本检测失败: img_src 为空或类型错误")
+            return False if not return_details else []
+
+        if not isinstance(patterns, list) or not patterns:
+            logger.error("无效的文本列表输入")
+            return False if not return_details else []
+
+        if not (0 <= confidence_threshold <= 1):
+            logger.error(f"无效的置信度阈值: {confidence_threshold}，应在 0 到 1 之间")
+            return False if not return_details else []
+
+        ocr_results = ocrx_process(get_ocrx_data(img_src))
+        if flag:
+            logger.debug(f"OCR 结果: {ocr_results}")
+
+        regex_flags = re.IGNORECASE if ignore_case else 0
+        compiled_patterns = []
+        for pattern in patterns:
+            try:
+                compiled_patterns.append(re.compile(pattern, flags=regex_flags))
+            except re.error as regex_error:
+                logger.warning(f"无效的正则表达式: {pattern} | 错误: {regex_error}")
+
+        if not compiled_patterns:
+            logger.error("未能解析任何有效的正则表达式")
+            return False if not return_details else []
+
+        matches = []
+        for res in ocr_results:
+            ocr_text = res.get('text', '')
+            confidence = res.get('confidence', 0)
+            if confidence < confidence_threshold:
+                continue
+
+            pattern_matches = []
+            for pattern in compiled_patterns:
+                match_found = False
+                if match_mode == "all":
+                    match_found = pattern.fullmatch(ocr_text) is not None
+                elif match_mode == "any":
+                    match_found = pattern.search(ocr_text) is not None
+                elif match_mode == "not":
+                    match_found = pattern.search(ocr_text) is None
+
+                pattern_matches.append(match_found)
+
+            if match_mode == "all" and all(pattern_matches):
+                match_info = {
+                    "text": ocr_text,
+                    "pattern_matches": pattern_matches,
+                    "confidence": confidence
+                }
+                matches.append(match_info)
+                if flag:
+                    logger.info(f"匹配成功: {match_info}")
+
+            elif match_mode == "any" and any(pattern_matches):
+                match_info = {
+                    "text": ocr_text,
+                    "pattern_matches": pattern_matches,
+                    "confidence": confidence
+                }
+                matches.append(match_info)
+                if flag:
+                    logger.info(f"匹配成功: {match_info}")
+
+            elif match_mode == "not" and any(pattern_matches):
+                if flag:
+                    logger.info(f"匹配失败: 模式 {patterns} 的反向匹配未找到")
+
+        if flag:
+            if matches:
+                logger.info(f"总匹配结果: {matches}")
+            else:
+                logger.info(f"未找到符合条件的文本 | 输入模式: {patterns}")
+
+        if return_details:
+            return matches
+        return bool(matches)
+
+    except Exception as e:
+        logger.error(f"文本检测失败: {e} | 输入文本列表: {patterns}")
+        return False if not return_details else []
+
+
+# 获取ocr_text的坐标
+def get_text_coordinates(text: str,
+                         img_src: Optional[np.ndarray] = None,
+                         threshold: float = 0.5,
+                         multiple: bool = False,
+                         partial_match: bool = False) -> Union[List[List[int]], List[Tuple[List[int], float]]]:
+    """
+    获取文本在图像中的坐标。
+
+    Args:
+        text: 要查找的文本。
+        img_src: 可选参数，提供图像源。如果未提供，则使用 getWindowShot() 获取屏幕截图。
+        threshold: 可选参数，匹配的置信度阈值，默认为 0.8。
+        multiple: 可选参数，是否返回多个匹配结果，默认为 False。
+        partial_match: 可选参数，是否允许部分匹配，默认为 False。
+
+    Returns:
+        如果 multiple 为 False，则返回一个包含文本坐标的列表，格式为 [[x1, y1], [x2, y2], [x3, y3], [x4, y4]]。
+        如果 multiple 为 True，则返回一个包含多个匹配结果的列表，每个元素是一个元组，
+        格式为 ([[x1, y1], [x2, y2], [x3, y3], [x4, y4]], confidence)，其中 confidence 是匹配的置信度。
+        如果没有找到匹配的文本，则返回空列表。
+    """
+    try:
+        img_src = img_src or getWindowShot()
+        if img_src is None:
+            logger.warning("无法获取图像源。")
+            return []
+
+        result = ocrx_process(get_ocrx_data(img_src))
+        if partial_match:
+            pattern = re.compile(f".*{text}.*")
+        else:
             pattern = re.compile(text)
-            for res in result:
-                if pattern.search(res['text']):
+
+        coordinates = []
+        for res in result:
+            match = pattern.search(res['text'])
+            if match and res['confidence'] >= threshold:
+                if multiple:
+                    coordinates.append((res['coordinates'], res['confidence']))
+                else:
                     return res['coordinates']
-        return []
+        return coordinates
     except Exception as e:
         logger.error(f"获取文本坐标失败: {e}")
         return []
@@ -520,18 +874,21 @@ def ocrx_process(ocr_result: dict) -> list:
     """
     result_list = []
     try:
-        if not ocr_result or not isinstance(ocr_result, dict):
-            logger.warning("OCR 结果为空或格式不正确")
+        if not ocr_result:
+            # logger.warning("OCR 返回结果为空")
+            return result_list
+        if not isinstance(ocr_result, dict):
+            logger.warning(f"OCR 返回结果格式错误，类型为: {type(ocr_result)}")
             return result_list
 
         data = ocr_result.get("data", [])
         if not isinstance(data, list):
-            logger.warning("OCR 数据格式错误，'data' 应为列表")
+            logger.warning(f"OCR 数据格式错误，'data' 应为列表，但类型为: {type(data)}")
             return result_list
 
         for item in data:
             if not isinstance(item, dict):
-                logger.warning("OCR 文本块格式错误，非字典类型")
+                logger.warning(f"OCR 文本块格式错误，非字典类型，实际类型为: {type(item)}")
                 continue
 
             box = item.get("box", [])
@@ -605,14 +962,28 @@ def process_and_merge_ocr(ocr_result: dict, scheme: str = "multi_para") -> list:
     return []
 
 
-def check_text_and_click(pattern: str, clicks: int = 1):
+def check_text_and_click(text: str, click: int = 1):
+    """匹配文本并点击对应的选项"""
+    ocr_coordinates = get_text_coordinates(text)
+    if ocr_coordinates:
+        click_center_of_text(ocr_coordinates, click)
+
+
+def check_text_and_clickR(text: str, click: int = 1):
+    """匹配文本并点击对应的选项"""
+    ocr_coordinates = get_text_coordinates(text)
+    if ocr_coordinates:
+        click_center_of_textR(ocr_coordinates, click)
+
+
+def check_text_in_model_and_click(pattern: str, clicks: int = 1):
     """匹配文本并点击对应的选项"""
     result_check = check_text_in_model(cfg.bboxes, pattern)
     if result_check:
         click_center_of_bbox(result_check, clicks)
 
 
-def check_text_and_clickR(pattern: str, clicks: int = 1):
+def check_text_in_model_and_clickR(pattern: str, clicks: int = 1):
     """匹配文本并点击对应的选项"""
     result_check = check_text_in_model(cfg.bboxes, pattern)
     if result_check:
@@ -900,7 +1271,170 @@ def labels_exists(bboxes: list, label_id: float) -> bool:
     return False
 
 
-def getWindowShot():
+def getWindowShot(
+        target: str = "screen",
+        window_name: str = None,
+        convert: bool = False,
+        output_format: str = "ndarray",
+        file_format: str = "png",
+        file_path: str = None,
+        crop_area: tuple[int, int, int, int] = None,
+        preprocess: list[str] = None,
+        quality: int = 50,
+        debug: bool = False,
+        monitor_id: int = 0,
+        base64_as_str: bool = True,
+) -> str | np.ndarray | bytes | None:
+    """
+    获取屏幕或指定窗口截图，并支持多种处理与输出选项。
+
+    :param target: 截图目标，"screen" 或 "window"
+    :param window_name: 窗口标题，仅在 target 为 "window" 时有效
+    :param convert: 是否对输出数据进行 JSON 兼容性转换
+    :param output_format: 输出格式，可选 'ndarray', 'file_path', 'base64'
+    :param file_format: 文件存储格式，默认 'png'，可选 'jpg', 'tiff'
+    :param file_path: 指定保存路径，默认 None（自动生成临时文件）
+    :param crop_area: 裁剪区域 (x, y, w, h)，默认 None
+    :param preprocess: 图像预处理选项列表，可选 ['resize', 'grayscale', 'blur']
+    :param quality: 图像质量参数，仅在 JPEG 格式中生效，默认 50
+    :param debug: 是否显示截图内容，默认 False
+    :param monitor_id: 多显示器支持，默认主显示器 (0)
+    :param base64_as_str: 是否将 Base64 输出作为字符串，默认 True。否则返回字节流
+    :return: 处理后的截图数据，格式根据 output_format 决定
+    """
+    try:
+        if target == "screen":
+            with mss.mss() as sct:
+                monitors = sct.monitors
+                if monitor_id < 0 or monitor_id >= len(monitors):
+                    raise ValueError(f"无效的监视器 ID: {monitor_id}")
+                monitor = monitors[monitor_id]
+                sct_img = sct.grab(monitor)
+                img_src = cv2.cvtColor(np.array(sct_img), cv2.COLOR_BGRA2BGR)
+
+        elif target == "window":
+            # if not window_name:
+            #     raise ValueError("请指定窗口标题 (window_name)")
+            # window = pwc.getWindowsWithTitle(window_name)
+            # if not window:
+            #     raise ValueError(f"找不到标题为 '{window_name}' 的窗口")
+            wm.window_info()
+
+            monitor = {
+                "top": cfg.m_top,
+                "left": cfg.m_left,
+                "width": cfg.m_width,
+                "height": cfg.m_height
+            }
+            if any(value <= 0 for value in monitor.values()):
+                logger.warning("窗口参数无效，无法截取截图")
+                return None
+
+            with mss.mss() as sct:
+                screen = sct.monitors[0]
+                monitor["top"] = max(0, monitor["top"])
+                monitor["left"] = max(0, monitor["left"])
+                monitor["width"] = min(screen["width"] - monitor["left"], monitor["width"])
+                monitor["height"] = min(screen["height"] - monitor["top"], monitor["height"])
+
+                sct_img = sct.grab(monitor)
+                img_src = cv2.cvtColor(np.array(sct_img), cv2.COLOR_BGRA2BGR)
+        else:
+            raise ValueError(f"无效的截图目标: {target}")
+
+        if crop_area:
+            x, y, w, h = crop_area
+            x, y = max(0, x), max(0, y)
+            w, h = max(1, w), max(1, h)
+            img_src = img_src[y:y + h, x:x + w]
+
+        if preprocess:
+            img_src = preprocess_image(img_src, preprocess)
+
+        if debug:
+            cv2.imshow("Debug Screenshot", img_src)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
+
+        return process_image(
+            img_src,
+            output_format,
+            convert,
+            file_format,
+            quality,
+            file_path,
+            base64_as_str
+        )
+
+    except Exception as e:
+        # logger.error(f"获取截图失败: {e}")
+        return None
+
+
+def preprocess_image(img: np.ndarray, operations: list[str]) -> np.ndarray:
+    """
+    对图像进行预处理。
+
+    :param img: 输入图像 (numpy.ndarray)
+    :param operations: 预处理操作列表
+    :return: 预处理后的图像
+    """
+    for operation in operations:
+        if operation == "resize":
+            img = cv2.resize(img, (640, 480))
+        elif operation == "grayscale":
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        elif operation == "blur":
+            img = cv2.GaussianBlur(img, (5, 5), 0)
+    return img
+
+
+def process_image(
+        img_src: np.ndarray,
+        output_format: str,
+        convert: bool,
+        file_format: str,
+        quality: int,
+        file_path: str,
+        base64_as_str: bool,
+) -> str | np.ndarray | bytes | None:
+    """
+    处理图像数据为指定格式。
+
+    :param img_src: 输入图像
+    :param output_format: 输出格式，可选 'ndarray', 'file_path', 'base64'
+    :param convert: 是否对输出进行 JSON 兼容转换
+    :param file_format: 文件存储格式
+    :param quality: 图像质量参数，仅对 JPEG 生效
+    :param file_path: 指定保存路径，默认 None（自动生成临时文件）
+    :param base64_as_str: 是否将 Base64 输出作为字符串，默认 True
+    :return: 指定格式的图像数据
+    """
+    if output_format == "ndarray":
+        return img_src.tolist() if convert else img_src
+
+    elif output_format == "file_path":
+        if file_path is None:
+            with tempfile.NamedTemporaryFile(suffix=f".{file_format}", delete=False) as temp_file:
+                file_path = temp_file.name
+        if file_format.lower() == "jpg":
+            encode_param = [cv2.IMWRITE_JPEG_QUALITY, quality]
+            cv2.imwrite(file_path, img_src, encode_param)
+        else:
+            cv2.imwrite(file_path, img_src)
+        return file_path
+
+    elif output_format == "base64":
+        _, buffer = cv2.imencode(f".{file_format}", img_src)
+        base64_data = base64.b64encode(buffer.tobytes())
+        return base64_data.decode("utf-8") if base64_as_str else base64_data
+
+    else:
+        # logger.warning(f"未知的输出格式: {output_format}")
+        return None
+
+
+def getWindowShot_test():
     try:
         wm.window_info()
         monitor = {
@@ -1157,7 +1691,7 @@ def getDetectionTRT(img_src: np.ndarray) -> list:
 def getMonitor():
     with mss.mss() as sct:
         while True:
-            img_src = getWindowShot()
+            img_src = getWindowShot("window")
             if img_src is not None:
                 with cfg.lock:
                     if cfg.previous_img_src is None or not np.array_equal(img_src, cfg.previous_img_src):
@@ -1196,68 +1730,90 @@ def drawBBox(img_src: np.ndarray, bboxes: list) -> np.ndarray:
 
 """YOLO推理相关"""
 
-"""线程"""
+cfg_lock = threading.Lock()
 
 
 def imgsrc_update_thread():
     """更新屏幕截图"""
     while True:
         try:
-            new_img_src = getWindowShot()
-            if new_img_src is not None and not (cfg.img_src == new_img_src).all():
-                cfg.img_src = new_img_src
-                cfg.img_event.set()
+            new_img_src = getWindowShot("window")
+            if new_img_src is not None:
+                with cfg_lock:
+                    if not (cfg.img_src == new_img_src).all():
+                        cfg.img_src = new_img_src
+                        cfg.img_event.set()
             time.sleep(0.5)
         except Exception as e:
             logger.warning(f"imgsrc_update_thread 中的错误: {e}")
 
 
-# def bboxes_update_thread():
-#     """更新目标检测的边界框数据"""
-#     while True:
-#         try:
-#             if cfg.img_src is not None and np.any(cfg.img_src):
-#                 new_bboxes = getDetection(cfg.img_src)
-#                 if new_bboxes != cfg.bboxes:
-#                     cfg.bboxes = new_bboxes
-#                     cfg.bboxes_event.set()
-#             time.sleep(1)
-#         except Exception as e:
-#             logger.error(f"bbox_update_thread 中的错误: {e}")
-#             break
 def bboxes_update_thread():
     """更新目标检测的边界框数据"""
     while True:
         try:
-            if cfg.img_src is not None and cfg.img_src.size > 0:
-                new_bboxes = getDetectionTRT(cfg.img_src)
-                if not np.array_equal(new_bboxes, cfg.bboxes):
-                    cfg.bboxes = new_bboxes
-                    cfg.bboxes_event.set()
-            time.sleep(1)
+            with cfg_lock:
+                if cfg.img_src is not None and cfg.img_src.size > 0:
+                    new_bboxes = getDetectionTRT(cfg.img_src)
+                    if not np.array_equal(new_bboxes, cfg.bboxes):
+                        cfg.bboxes = new_bboxes
+                        cfg.bboxes_event.set()
+            time.sleep(0.5)
         except Exception as e:
             logger.error(f"bbox_update_thread 中的错误: {e}")
-            break
 
 
 def ocr_update_thread():
     """更新 OCR 识别结果"""
     while True:
         try:
-            if cfg.img_src is not None and cfg.img_src.any():
-                new_ocr_result = ocrx_process(get_ocrx_data(cfg.img_src))
-                if new_ocr_result != cfg.ocr_result:
-                    cfg.ocr_result = new_ocr_result
-                    cfg.ocr_event.set()
-            time.sleep(2)
+            with cfg_lock:
+                if cfg.img_src is not None and cfg.img_src.any():
+                    new_ocr_result = ocrx_process(get_ocrx_data(cfg.img_src))
+                    if new_ocr_result != cfg.ocr_result:
+                        cfg.ocr_result = new_ocr_result
+                        cfg.ocr_event.set()
+            time.sleep(0.5)
         except Exception as e:
             logger.error(f"ocr_update_thread 中的错误: {e}")
-            break
 
 
-def load_event_data(file_path):
-    with open(file_path, 'r', encoding='utf-8') as f:
-        return json.load(f)
+"""进程相关"""
+
+
+def kill_process(process_name: str):
+    """
+    杀死指定名称的进程。
+
+    Args:
+        process_name: 要杀死的进程名称。
+    """
+    for proc in psutil.process_iter(['pid', 'name']):
+        try:
+            if proc.info['name'] == process_name:
+                proc.kill()
+                # print(f"进程 {process_name} (PID: {proc.info['pid']}) 已杀死")
+        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+            pass
+
+
+def is_process_running(process_name: str) -> bool:
+    """
+  检测指定名称的进程是否存在。
+
+  Args:
+      process_name: 要检测的进程名称。
+
+  Returns:
+      如果进程存在则返回 True，否则返回 False。
+  """
+    for proc in psutil.process_iter(['name']):
+        try:
+            if proc.info['name'] == process_name:
+                return True
+        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+            pass
+    return False
 
 
 wm = WindowManager()

@@ -56,7 +56,7 @@ def navigate_to_mirror_dungeons():
             cfg.bboxes_event.clear()
             continue
 
-        if text_exists(cfg.img_src, '呼啸之镜'):
+        if any(text_exists(cfg.img_src, text) for text in [r'呼啸之镜', r'梦中之镜']):
             logger.info("已进入镜像迷宫")
             cfg.img_event.clear()
             cfg.bboxes_event.clear()
@@ -66,20 +66,32 @@ def navigate_to_mirror_dungeons():
         cfg.bboxes_event.clear()
 
 
-def enter_wuthering_mirror():
-    """进入呼啸之镜"""
-    logger.info("开始进入呼啸之镜流程")
-
+def enter_mirror_dungeons():
+    """进入镜像迷宫关卡"""
     while True:
-        if not cfg.img_event.is_set():
-            cfg.img_event.wait(timeout=5)
-        if not cfg.bboxes_event.is_set():
-            cfg.bboxes_event.wait(timeout=5)
+        cfg.img_event.wait(timeout=5)
+        cfg.bboxes_event.wait(timeout=5)
 
-        if text_exists(cfg.img_src, 'SIMULATION'):
-            check_text_and_click('SIMULATION')
-            cfg.img_event.clear()
-            continue
+        if cfgm.get("Mirror_Dungeons.mirror_dungeons_choose") and text_exists(cfg.img_src,
+                                                                              '每周加成') and not text_exists(
+            cfg.img_src, '迷宫进度') and text_exists(
+            cfg.img_src, '探索状态'):
+            match cfgm.get("Mirror_Dungeons.mirror_dungeons_choose.selected"):
+                case 1:
+                    if text_exists(cfg.img_src, r'梦中之镜'):
+                        check_text_and_clickR('进入')
+                        cfg.img_event.clear()
+                        cfg.bboxes_event.clear()
+                        continue
+                case 2:
+                    if text_exists(cfg.img_src, 'SIMULATION'):
+                        check_text_and_clickR('SIMULATION')
+                        cfg.img_event.clear()
+                        cfg.bboxes_event.clear()
+                        continue
+                case _:
+                    logger.warning("未知镜像迷宫选择，跳过当前循环")
+                    break
 
         if text_exists(cfg.img_src, '迷宫进度'):
             check_label_and_click(cfg.bboxes, 'Resume')
@@ -88,9 +100,8 @@ def enter_wuthering_mirror():
             cfg.bboxes_event.clear()
             continue
 
-        if text_exists(cfg.img_src, r'是否进入呼啸之镜.*'):
+        if text_exists(cfg.img_src, r'是否进入.*'):
             check_label_and_click(cfg.bboxes, 'Confirm')
-            logger.info("已进入呼啸之镜")
             cfg.img_event.clear()
             cfg.bboxes_event.clear()
             continue
@@ -123,44 +134,58 @@ def enter_wuthering_mirror():
             cfg.bboxes_event.clear()
             continue
 
-        if not text_exists(cfg.img_src, '呼啸之镜') or not text_exists(cfg.img_src, 'SIMULATION'):
-            logger.info("检测到不在呼啸之镜界面，结束流程")
+        if (not text_exists(cfg.img_src, '主题卡包图鉴') or not text_exists(cfg.img_src, '进入')) and not text_exists(
+                cfg.img_src, '每周加成'):
+            cfg.img_event.clear()
+            cfg.bboxes_event.clear()
             break
 
         cfg.img_event.clear()
         cfg.bboxes_event.clear()
 
-    logger.info("结束呼啸之镜流程")
+    logger.info("结束镜像迷宫流程")
 
 
 def choose_random_ego_gift():
-    """随机选择E.G.O饰品"""
+    """选择初始E.G.O饰品"""
+    ego_gift_choose = cfgm.get("Mirror_Dungeons.ego_gift_choose")[
+        str(cfgm.get("Mirror_Dungeons.ego_gift_choose.selected"))]
+    ego_gift_list = cfgm.get("Mirror_Dungeons.ego_gift_list")[ego_gift_choose]
+    found_ego_gift = False
     while True:
         cfg.img_event.wait(timeout=10)
         cfg.bboxes_event.wait(timeout=10)
-
-        if text_exists(cfg.img_src, r'选择.+饰品') and text_exists(cfg.img_src, '随机'):
-            if text_exists(cfg.img_src, '0/2') or text_exists(cfg.img_src, '1/2'):
-                check_label_and_click(cfg.bboxes, 'E.G.O Gift')
-            elif text_exists(cfg.img_src, '2/2'):
-                check_label_and_click(cfg.bboxes, 'Confirm')
+        if text_list_exists(cfg.img_src, ['烧伤', '流血', '突刺', '打击']) and text_exists(cfg.img_src,
+                                                                                           '0/1') and not found_ego_gift:
+            check_text_and_clickR(ego_gift_choose)
             cfg.img_event.clear()
             cfg.bboxes_event.clear()
-            continue
+
+        cfg.img_event.wait(timeout=10)
+        cfg.bboxes_event.wait(timeout=10)
+        if text_exists(cfg.img_src, r'选择.+饰品'):
+            if not found_ego_gift:
+                for ego_gift in ego_gift_list:
+                    if text_exists(cfg.img_src, ego_gift):
+                        found_ego_gift = True
+                        break
+
+            if text_exists(cfg.img_src, '0/1') and found_ego_gift:
+                for ego_gift in ego_gift_list:
+                    if text_exists(cfg.img_src, ego_gift):
+                        check_text_and_clickR(ego_gift)
+                        cfg.img_event.clear()
+                        cfg.bboxes_event.clear()
+                        break
+
+            if text_exists(cfg.img_src, '1/1') or found_ego_gift:
+                check_text_and_clickR(r"\b选择\b")
         cfg.img_event.clear()
         cfg.bboxes_event.clear()
 
-        if (text_exists(cfg.img_src, '0/2') or text_exists(cfg.img_src, '1/2')) and text_exists(cfg.img_src,
-                                                                                                '随机'):
-            check_text_and_click('？？？')
-            logger.info("点击 ？？？")
-            cfg.img_event.clear()
-            cfg.bboxes_event.clear()
-            continue
-        cfg.img_event.clear()
-        cfg.bboxes_event.clear()
-
-        if not text_exists(cfg.img_src, 'E.G.O饰品信息') and not text_exists(cfg.img_src, '随机'):
+        cfg.img_event.wait(timeout=10)
+        cfg.bboxes_event.wait(timeout=10)
+        if not text_exists(cfg.img_src, 'E.G.O饰品信息') and not text_exists(cfg.img_src, r'选择.+饰品'):
             logger.info("结束 E.G.O饰品选择流程")
             cfg.img_event.clear()
             cfg.bboxes_event.clear()
@@ -168,7 +193,7 @@ def choose_random_ego_gift():
         cfg.img_event.clear()
         cfg.bboxes_event.clear()
 
-    logger.info("结束随机E.G.O饰品界面检测")
+    logger.info("结束初始E.G.O饰品界面检测")
 
 
 def ego_gift_event():
@@ -180,7 +205,7 @@ def ego_gift_event():
                 cfg.img_src, 'E.G.O饰品信息'):
             check_label_and_click(cfg.bboxes, 'E.G.O Gift')
             time.sleep(1)
-            check_text_and_click(r'选择.+饰品', 2)
+            check_text_in_model_and_click(r'选择.+饰品', 2)
             time.sleep(1)
             check_label_and_click(cfg.bboxes, 'Confirm')
             cfg.img_event.clear()
@@ -212,20 +237,28 @@ def choose_encounter_reward_card():
     while True:
         cfg.img_event.wait(timeout=10)
         cfg.bboxes_event.wait(timeout=10)
-        if text_exists(cfg.img_src, r'.*0/.*'):
+        if text_exists(cfg.img_src, '选择遭遇战奖励卡') and not text_exists(cfg.img_src, r'1/1'):
             check_label_and_click(cfg.bboxes, 'Encounter Reward Card')
             cfg.img_event.clear()
             cfg.bboxes_event.clear()
+            continue
+        cfg.img_event.clear()
+        cfg.bboxes_event.clear()
 
-        cfg.img_event.wait(timeout=10)
-        cfg.bboxes_event.wait(timeout=10)
-        if text_exists(cfg.img_src, r'.*1/.*'):
+        if text_exists(cfg.img_src, r'1/1'):
             check_label_and_click(cfg.bboxes, 'Confirm')
             cfg.img_event.clear()
             cfg.bboxes_event.clear()
+            continue
+        cfg.img_event.clear()
+        cfg.bboxes_event.clear()
 
         if not text_exists(cfg.img_src, '选择遭遇战奖励卡') and not text_exists(cfg.img_src, '遭遇战奖励卡指南'):
+            cfg.img_event.clear()
+            cfg.bboxes_event.clear()
             break
+        cfg.img_event.clear()
+        cfg.bboxes_event.clear()
 
     logger.info("结束选择遭遇战奖励卡界面检测")
 
@@ -236,7 +269,7 @@ def confirm_ego_gift_info():
         cfg.img_event.wait(timeout=10)
         cfg.bboxes_event.wait(timeout=10)
         if text_exists(cfg.img_src, 'E.G.O饰品信息') or text_exists(cfg.img_src, r'获得E.G.O饰品.*'):
-            check_text_and_click(r'选择.+饰品')
+            check_text_in_model_and_click(r'选择.+饰品')
             cfg.img_event.clear()
             cfg.bboxes_event.clear()
             continue
@@ -281,10 +314,42 @@ def team_formation():
     logger.info("结束初始编队界面检测")
 
 
+def choose_grace_of_the_dreaming_star():
+    grace_of_the_dreaming_stars = cfgm.get("Mirror_Dungeons.grace_of_the_dreaming_star_choose")
+    choose_any_option = False
+
+    if not grace_of_the_dreaming_stars:
+        logger.info("grace_of_the_dreaming_stars 列表为空，自动选择 '起始之星'")
+        cfg.img_event.wait(timeout=10)
+        check_text_and_clickR('起始之星')
+        cfg.img_event.clear()
+        logger.info("结束星之恩惠界面检测")
+        return
+
+    while True:
+        if not choose_any_option:
+            for grace_of_the_dreaming_star in grace_of_the_dreaming_stars:
+                cfg.img_event.wait(timeout=10)
+                if text_exists(cfg.img_src, grace_of_the_dreaming_star):
+                    check_text_and_clickR(grace_of_the_dreaming_star)
+                    cfg.img_event.clear()
+            choose_any_option = True
+        else:
+            check_text_and_clickR(r'.*完成')
+
+        if text_list_exists(cfg.img_src, ['选择星之恩惠', r'要选择此效果吗.*']):
+            check_text_in_model_and_clickR(r'.*确认')
+
+        if not text_exists(cfg.img_src, r'梦中的星之恩惠') and choose_any_option:
+            break
+
+    logger.info("结束星之恩惠界面检测")
+
+
 def choose_themes_pack():
     """选择主题卡包"""
     theme_packs = cfgm.get("Mirror_Dungeons.theme_pack_choose")
-
+    moveto(60, 255)
     while True:
         for theme_pack in theme_packs:
             cfg.img_event.wait(timeout=10)
@@ -399,45 +464,38 @@ def choose_path():
     logger.info("结束路径选择")
 
 
-def shop_buy():
-    """商店购买"""
+def shop_buy(max_heal_count: int = 1):
+    heal_count = 0
+    if text_exists(cfg.img_src, '治疗罪人') and heal_count < max_heal_count and not text_list_exists(cfg.img_src,
+                                                                                                     [
+                                                                                                         r'可以恢复或是复活罪人.*',
+                                                                                                         '结果'],
+                                                                                                     match_mode='all'):
+        check_text_and_clickR('治疗罪人')
+        heal_count += 1
+
     while True:
         cfg.img_event.wait(timeout=10)
         cfg.bboxes_event.wait(timeout=10)
-
-        if check_text_and_clickR(r'SKIP.*', clicks=2):
-            continue
-
-        if text_exists(cfg.img_src, '治疗罪人') and not labels_exists(cfg.bboxes, Labels_ID['Event Option']):
-            check_text_and_click('治疗罪人')
-            continue
 
         if any(text_exists(cfg.img_src, pattern) for pattern in [
             r'.*让全体罪人坐在椅子上休息.*',
             r"全体罪人恢复.+体力.+理智值",
             '选择能量饮料',
             '购买成功'
-        ]) and not text_exists(cfg.img_src, '继续'):
-            check_text_and_click(r'全体罪人恢复.+体力.+理智值')
+        ]) and not text_exists(cfg.img_src, '结果'):
+            check_text_and_clickR(r'全体罪人恢复.+体力.+理智值')
             continue
 
         if text_exists(cfg.img_src, '选择看上去疲倦的罪人') or text_exists(cfg.img_src, r'让谁休息比较好呢.*'):
-            check_text_and_click(r'选择看上去疲倦的罪人')
+            check_text_and_clickR(r'选择看上去疲倦的罪人')
             continue
 
-        if text_exists(cfg.img_src, '购买成功'):
-            check_label_and_click(cfg.bboxes, 'Confirm')
+        if text_exists(cfg.img_src, r'全体罪人的体力与理智值恢复了.*'):
+            check_text_and_clickR('返回')
             continue
 
-        if text_exists(cfg.img_src, '结果') and text_exists(cfg.img_src, '继续'):
-            check_text_and_click('继续')
-            continue
-
-        if text_exists(cfg.img_src, r'SOLD.+OUT') and text_exists(cfg.img_src, '离开'):
-            check_label_and_click(cfg.bboxes, 'Leava')
-            continue
-
-        if text_exists(cfg.img_src, '商品列表') and not text_exists(cfg.img_src, '治疗罪人'):
+        if text_list_exists(cfg.img_src, ['售卖饰品', '编队']) and not heal_count < max_heal_count:
             check_label_and_click(cfg.bboxes, 'Leava')
             continue
 
@@ -448,7 +506,7 @@ def shop_buy():
             check_label_and_click(cfg.bboxes, 'Confirm')
             continue
 
-        if not any(text_exists(cfg.img_src, text) for text in ['商品列表', '治疗罪人', '编队']):
+        if not any(text_exists(cfg.img_src, text) for text in ['商店', '治疗罪人', '编队', '离开']):
             cfg.img_event.clear()
             cfg.bboxes_event.clear()
             break
@@ -465,10 +523,15 @@ def enter_event():
             check_label_and_click(cfg.bboxes, 'Enter')
             cfg.img_event.clear()
             cfg.bboxes_event.clear()
+            continue
+        cfg.img_event.clear()
+        cfg.bboxes_event.clear()
         if not text_exists(cfg.img_src, '通关奖励') or not text_exists(cfg.img_src, '进入'):
             cfg.img_event.clear()
             cfg.bboxes_event.clear()
             break
+        cfg.img_event.clear()
+        cfg.bboxes_event.clear()
 
     logger.info("结束进入事件界面检测")
 
@@ -479,7 +542,7 @@ def battle_choose_characters():
     while True:
         cfg.img_event.wait(timeout=5)
         cfg.bboxes_event.wait(timeout=5)
-        if not text_exists(cfg.img_src, '6/6') and text_exists(cfg.img_src, '开始战斗'):
+        if not text_exists(cfg.img_src, r'\b12/12\b') and text_exists(cfg.img_src, '开始战斗'):
             # check_label_and_click(cfg.bboxes, 'Start')
             cfg.img_event.clear()
             cfg.bboxes_event.clear()
@@ -491,7 +554,7 @@ def battle_choose_characters():
 
         cfg.img_event.wait(timeout=5)
         cfg.bboxes_event.wait(timeout=5)
-        if not text_exists(cfg.img_src, '6/6') and not text_exists(cfg.img_src, '开始战斗'):
+        if not text_exists(cfg.img_src, r'\b12/12\b') and not text_exists(cfg.img_src, '开始战斗'):
             cfg.img_event.clear()
             cfg.bboxes_event.clear()
             break
@@ -555,6 +618,7 @@ def start_battle():
         if not labels_exists(cfg.bboxes, Labels_ID['Win Rate']) and not labels_exists(cfg.bboxes,
                                                                                       Labels_ID['Damage']) and (
                 text_exists(cfg.img_src, '选择遭遇战奖励卡')
+                or text_exists(cfg.img_src, '遭遇战奖励卡指南')
                 or text_exists(cfg.img_src, r'正在探索.*')
                 or text_exists(cfg.img_src, r'选择.+饰品')
                 or text_exists(cfg.img_src, r'获得.+饰品.*')
@@ -578,72 +642,63 @@ def abnormality_encounters_event():
         r".*选择后.+获得.+饰品",
         r".*进行后.+获得.+饰品",
         r"根据后续选项.+获得.+饰品"
+        r"拒绝.*"
     ]
 
     try:
         while True:
             cfg.img_event.wait(timeout=10)
             cfg.bboxes_event.wait(timeout=10)
-            if labels_exists(cfg.bboxes, Labels_ID['Skip']):
-                check_text_and_clickR(r'SKIP.*', clicks=10)
-                cfg.img_event.clear()
-                cfg.bboxes_event.clear()
 
-            cfg.img_event.wait(timeout=10)
-            cfg.bboxes_event.wait(timeout=10)
-            if text_exists(cfg.img_src, "继续") or labels_exists(cfg.bboxes, Labels_ID['Continue']) or labels_exists(
+            if (text_exists(cfg.img_src, "SKIP") or
+                    text_exists(cfg.img_src, r"\d{2}:\d{2}:\d{2}:\d{2}") or
+                    any(text_exists(cfg.img_src, cond) for cond in event_text_conditions) or
+                    text_exists(cfg.img_src, "继续") or
+                    labels_exists(cfg.bboxes, Labels_ID['Continue']) or
+                    labels_exists(cfg.bboxes, Labels_ID['Leava']) or
+                    text_exists(cfg.img_src, r"选择一位罪人来进行判定.*") or
+                    (text_exists(cfg.img_src, r"预计成功率.*") and labels_exists(cfg.bboxes, Labels_ID['Start'])) or
+                    ((text_exists(cfg.img_src, "判定成功") or text_exists(cfg.img_src, "判定失败")) and not text_exists(
+                        cfg.img_src, r"选择一位罪人来进行判定.*"))):
+
+                if labels_exists(cfg.bboxes, Labels_ID['Skip']) or text_exists(cfg.img_src, "SKIP"):
+                    check_text_and_clickR(r'SKIP', 5)
+
+                if any(text_exists(cfg.img_src, cond) for cond in event_text_conditions):
+                    for text_condition in event_text_conditions:
+                        if text_exists(cfg.img_src, text_condition):
+                            check_text_in_model_and_click(text_condition)
+                            break
+
+                if text_exists(cfg.img_src, "继续") or labels_exists(cfg.bboxes,
+                                                                     Labels_ID['Continue']) or labels_exists(
                     cfg.bboxes, Labels_ID['Leava']):
-                check_text_and_clickR("继续")
-                check_label_and_click(cfg.bboxes, 'Continue')
-                check_label_and_click(cfg.bboxes, 'Leava')
+                    check_text_in_model_and_clickR("继续")
+                    check_label_and_click(cfg.bboxes, 'Continue')
+                    check_label_and_click(cfg.bboxes, 'Leava')
+
+                if text_exists(cfg.img_src, r"选择一位罪人来进行判定.*"):
+                    if text_exists(cfg.img_src, "极高") or labels_exists(cfg.bboxes, Labels_ID['Advantage-High']):
+                        check_text_and_clickR("极高")
+                    elif text_exists(cfg.img_src, "高"):
+                        check_text_and_clickR(r"高")
+
+                if (text_exists(cfg.img_src, r"预计成功率.*") and labels_exists(cfg.bboxes, Labels_ID['Start'])):
+                    check_label_and_click(cfg.bboxes, 'Start')
+
+                if (text_exists(cfg.img_src, "判定成功") or text_exists(cfg.img_src, "判定失败")) and not text_exists(
+                        cfg.img_src, r"选择一位罪人来进行判定.*"):
+                    check_text_in_model_and_clickR(r'SKIP', clicks=10)
+
                 cfg.img_event.clear()
                 cfg.bboxes_event.clear()
                 continue
-            cfg.img_event.clear()
-            cfg.bboxes_event.clear()
 
             cfg.img_event.wait(timeout=10)
-            cfg.bboxes_event.wait(timeout=10)
-            if text_exists(cfg.img_src, r"选择一位罪人来进行判定.*"):
-                if text_exists(cfg.img_src, "极高") or labels_exists(cfg.bboxes, Labels_ID['Advantage-High']):
-                    check_label_and_click(cfg.bboxes, 'Advantage-High')
-                elif text_exists(cfg.img_src, "高"):
-                    check_label_and_click(cfg.bboxes, 'Advantage-High')
+            if not text_exists(cfg.img_src, 'SKIP') and not text_exists(cfg.img_src, r"\d{2}:\d{2}:\d{2}:\d{2}"):
                 cfg.img_event.clear()
-                cfg.bboxes_event.clear()
-                continue
-            cfg.img_event.clear()
-            cfg.bboxes_event.clear()
-
-            cfg.img_event.wait(timeout=10)
-            cfg.bboxes_event.wait(timeout=10)
-            if text_exists(cfg.img_src, r"预计成功率.*") and labels_exists(cfg.bboxes, Labels_ID['Start']):
-                check_label_and_click(cfg.bboxes, 'Start')
-                cfg.img_event.clear()
-                cfg.bboxes_event.clear()
-                continue
-            cfg.img_event.clear()
-            cfg.bboxes_event.clear()
-
-            cfg.img_event.wait(timeout=10)
-            cfg.bboxes_event.wait(timeout=10)
-            if (text_exists(cfg.img_src, "判定成功") or text_exists(cfg.img_src, "判定失败")) and not text_exists(
-                    cfg.img_src, r"选择一位罪人来进行判定.*"):
-                mouse_click(900, 510, 5, 1, 'left')
-                check_text_and_clickR(r'SKIP.*', clicks=10)
-                cfg.img_event.clear()
-                cfg.bboxes_event.clear()
-                continue
-            cfg.img_event.clear()
-            cfg.bboxes_event.clear()
-
-            cfg.img_event.wait(timeout=10)
-            cfg.bboxes_event.wait(timeout=10)
-            if not labels_exists(cfg.bboxes, Labels_ID['Skip']) and not text_exists(cfg.img_src,
-                                                                                    r"\d{2}:\d{2}:\d{2}:\d{2}"):
-                cfg.img_event.clear()
-                cfg.bboxes_event.clear()
                 break
+
             cfg.img_event.clear()
             cfg.bboxes_event.clear()
 
@@ -665,8 +720,7 @@ def check_mirror_completion() -> bool:
     while True:
         cfg.img_event.wait(timeout=10)
         cfg.bboxes_event.wait(timeout=10)
-        if text_exists(cfg.img_src, '战斗胜利') and text_exists(cfg.img_src, '累计造成伤害') and text_exists(
-                cfg.img_src, '通关奖励'):
+        if text_list_exists(cfg.img_src, ['战斗胜利', '累计造成伤害', '优秀员工']):
             check_label_and_click(cfg.bboxes, 'Confirm')
             cfg.img_event.clear()
             cfg.bboxes_event.clear()
@@ -697,7 +751,7 @@ def check_mirror_completion() -> bool:
         cfg.img_event.wait(timeout=5)
         cfg.bboxes_event.wait(timeout=5)
         if text_exists(cfg.img_src, '探索结束奖励') and text_exists(cfg.img_src, '战斗通行证经验值'):
-            check_text_and_click('领取')
+            check_text_in_model_and_click('领取')
             cfg.img_event.clear()
             cfg.bboxes_event.clear()
             continue
@@ -717,7 +771,7 @@ def check_mirror_completion() -> bool:
         cfg.img_event.wait(timeout=5)
         if not any(text_exists(cfg.img_src, pattern) for pattern in [
             '战斗胜利', '累计造成伤害', '探索完成', '总进度', '探索结束奖励']):
-            logger.info("镜牢4检测结束")
+            logger.info("胜利检测结束")
             cfg.img_event.clear()
             return True
         cfg.img_event.clear()
@@ -749,8 +803,8 @@ def server_error():
     cfg.img_event.wait(timeout=10)
     if text_exists(cfg.img_src, r'服务器发生错误.*'):
         mouse_click(1100, 745, 2, 1, 'left')
-        # check_text_and_clickR('重试')
-        check_text_and_click('重试')
+        # check_text_in_model_and_clickR('重试')
+        check_text_in_model_and_click('重试')
         cfg.img_event.clear()
 
 
@@ -794,10 +848,10 @@ def run():
                 break
 
     execute_process(
-        process_name="镜牢4",
+        process_name="镜像迷宫",
         switch_key="Mirror_Dungeons.mirror_switch",
         loop_count_key="Mirror_Dungeons.mirror_loop_count",
-        process_func=lambda: __import__('src.script.Mirror_Dungeon').script.Mirror_Dungeon.mw.start_mirror_wuthering()
+        process_func=lambda: __import__('src.script.Mirror_Dungeon').script.Mirror_Dungeon.mw.start_mirror_dungeon()
     )
 
     execute_process(

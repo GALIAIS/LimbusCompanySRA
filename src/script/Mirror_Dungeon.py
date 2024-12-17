@@ -37,19 +37,17 @@ event_handlers = {
 
 
 @define
-class Mirror_Wuthering:
-    """镜牢4流程脚本"""
+class Mirror_Dungeon:
     loop_count: int = cfgm.get("Mirror_Dungeons.mirror_loop_count")
     current_count: int = 0
     mirror_switch: bool = cfgm.get("Mirror_Dungeons.mirror_switch")
     mirror_pass_flag: bool = None
 
-    def start_mirror_wuthering(self):
-        """开始镜牢4流程"""
+    def start_mirror_dungeon(self):
         mirror_only_flag: bool = cfgm.get("Mirror_Dungeons.mirror_only_flag")
         TIMEOUT = 10 * 60
         MAX_RETRIES = 3
-        logger.info("启动镜牢4流程")
+        logger.info("启动镜像迷宫流程")
         retries = 0
 
         while mirror_only_flag or retries >= MAX_RETRIES:
@@ -62,21 +60,50 @@ class Mirror_Wuthering:
                 continue
 
             while True:
-                if labels_exists(cfg.bboxes, Labels_ID['Drive']) and not text_exists(cfg.img_src, '呼啸之镜'):
-                    logger.info("导航到镜牢")
+                if cfgm.get("Mirror_Dungeons.mirror_dungeons_choose") and labels_exists(cfg.bboxes, Labels_ID['Drive']):
+                    match cfgm.get("Mirror_Dungeons.mirror_dungeons_choose.selected"):
+                        case 1:
+                            logger.info("启动梦中之镜流程")
+                            if labels_exists(cfg.bboxes, Labels_ID['Drive']) and not text_exists(cfg.img_src,
+                                                                                                 r'梦中之镜'):
+                                cfg.img_event.clear()
+                                cfg.bboxes_event.clear()
+                                navigate_to_mirror_dungeons()
+                        case 2:
+                            logger.info("启动呼啸之镜流程")
+                            if labels_exists(cfg.bboxes, Labels_ID['Drive']) and not text_exists(cfg.img_src,
+                                                                                                 '呼啸之镜'):
+                                cfg.img_event.clear()
+                                cfg.bboxes_event.clear()
+                                navigate_to_mirror_dungeons()
+                        case _:
+                            logger.warning("未知镜像迷宫选择，跳过当前循环")
+                            break
+
+                if text_exists(cfg.img_src, '呼啸之镜') or text_exists(cfg.img_src,
+                                                                       '梦中之镜') or text_exists(
+                    cfg.img_src, r'探索状态') or text_exists(cfg.img_src, '主题卡包图鉴'):
+                    logger.info("进入镜牢")
                     cfg.img_event.clear()
-                    cfg.bboxes_event.clear()
-                    navigate_to_mirror_dungeons()
+                    enter_mirror_dungeons()
                     continue
 
-                if text_exists(cfg.img_src, '呼啸之镜') or text_exists(cfg.img_src, r'探索状态'):
-                    logger.info("进入呼啸之镜")
+                if text_exists(cfg.img_src, '播报员') and text_exists(cfg.img_src, '确认') and text_exists(cfg.img_src,
+                                                                                                           '罪孽碎片'):
+                    logger.info("队伍编成中")
                     cfg.img_event.clear()
-                    enter_wuthering_mirror()
+                    team_formation()
                     continue
 
-                if text_exists(cfg.img_src, r'选择.+饰品') and not text_exists(cfg.img_src, r'获得.+饰品.*'):
-                    logger.info("选择随机饰品")
+                if text_exists(cfg.img_src, '梦中的星之恩惠'):
+                    logger.info("星之恩惠选择")
+                    cfg.img_event.clear()
+                    choose_grace_of_the_dreaming_star()
+                    continue
+
+                if text_exists(cfg.img_src, r'选择.+饰品') and text_list_exists(cfg.img_src,
+                                                                                ['烧伤', '流血', '突刺', '打击']):
+                    logger.info("选择初始饰品")
                     cfg.img_event.clear()
                     choose_random_ego_gift()
                     continue
@@ -87,13 +114,6 @@ class Mirror_Wuthering:
                     logger.info("确认饰品信息")
                     cfg.img_event.clear()
                     ego_gift_event()
-                    continue
-
-                if text_exists(cfg.img_src, '播报员') and text_exists(cfg.img_src, '确认') and text_exists(cfg.img_src,
-                                                                                                           '罪孽碎片'):
-                    logger.info("队伍编成中")
-                    cfg.img_event.clear()
-                    team_formation()
                     continue
 
                 if (text_exists(cfg.img_src, r'选择.+层主题卡包') and not labels_exists(cfg.bboxes, Labels_ID[
@@ -112,7 +132,7 @@ class Mirror_Wuthering:
                 break
 
         while not self.mirror_pass_flag:
-            logger.trace("开始镜牢4循环")
+            logger.trace("开始镜牢循环")
             start_time = time.time()
 
             cfg.img_event.wait(timeout=5)
@@ -204,10 +224,14 @@ class Mirror_Wuthering:
         ) or (
                 text_exists(cfg.img_src, r'获得.+饰品.*')
                 and text_exists(cfg.img_src, r'正在探索第.+层')
+        ) or (
+                text_exists(cfg.img_src, r'获得.+饰品.*')
+                and text_exists(cfg.img_src, '拒绝饰品')
+                and text_exists(cfg.img_src, '选择')
         )
 
     def is_encounter_reward(self):
-        return text_exists(cfg.img_src, '选择遭遇战奖励卡')
+        return text_exists(cfg.img_src, '选择遭遇战奖励卡') and text_exists(cfg.img_src, '遭遇战奖励卡指南')
 
     def is_path_chosen(self):
         if (text_exists(cfg.img_src, r'正在探索.*')
@@ -229,10 +253,8 @@ class Mirror_Wuthering:
         )
 
     def is_shop(self):
-        if text_exists(cfg.img_src, r'SKIP.*') or text_exists(cfg.img_src, r"\d{2}:\d{2}:\d{2}:\d{2}"):
-            check_text_and_clickR(r'SKIP.*', 10)
-        return text_exists(cfg.img_src, r'商品列表.*') or text_exists(cfg.img_src, '治疗罪人') or text_exists(
-            cfg.img_src, '结果')
+        return (text_exists(cfg.img_src, r'商店') or text_exists(cfg.img_src, '结果')) and text_exists(cfg.img_src,
+                                                                                                       '治疗罪人')
 
     def is_battle_interface(self):
         moveto(1380, 700)
@@ -255,14 +277,13 @@ class Mirror_Wuthering:
         )
 
     def is_abnormality_encounter(self):
-        check_text_and_clickR(r'SKIP.*', 10)
         return (
                 text_exists(cfg.img_src, r'SKIP.*')
                 or text_exists(cfg.img_src, "决断")
                 or labels_exists(cfg.bboxes, Labels_ID['Skip'])
                 or text_exists(cfg.img_src, r".*选择后.+获得.+饰品")
                 or text_exists(cfg.img_src, '判定成功')
-        ) and not text_exists(cfg.img_src, '商品列表') and not text_exists(cfg.img_src, '治疗罪人')
+        ) and not text_exists(cfg.img_src, '商店') and not text_exists(cfg.img_src, '治疗罪人')
 
     def is_server_error(self):
         return text_exists(cfg.img_src, r'服务器发生错误.*')
@@ -278,4 +299,4 @@ class Mirror_Wuthering:
         ) or text_exists(cfg.img_src, '探索结束奖励')
 
 
-mw = Mirror_Wuthering()
+mw = Mirror_Dungeon()

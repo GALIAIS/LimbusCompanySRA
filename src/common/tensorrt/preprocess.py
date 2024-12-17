@@ -8,7 +8,7 @@ import cv2
 import numpy as np
 
 
-def letterbox(img, new_shape=(1280, 1280), color=(114, 114, 114)):
+def letterbox(img, new_shape=(1024, 1024), color=(114, 114, 114)):
     """
     调整图像到指定的形状，保持原始比例并填充边界。
 

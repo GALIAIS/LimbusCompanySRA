@@ -32,6 +32,7 @@ class GameInterface(ScrollArea):
         self.initWidget()
         self.initCard()
         self.initLayout()
+        self.initConfig()
 
     def initWidget(self):
         self.setWidget(self.scrollWidget)
@@ -49,11 +50,14 @@ class GameInterface(ScrollArea):
         self.resize(400, 400)
 
         self.Enkephalin_Group.addSettingCard(self.exchange_Enkephalin)
+        self.Mirror_Dungeons_Group.addSettingCard(self.mirror_dungeons_choose)
         self.Mirror_Dungeons_Group.addSettingCard(self.mirror_switch)
         self.Mirror_Dungeons_Group.addSettingCard(self.mirror_only_flag)
         self.Mirror_Dungeons_Group.addSettingCard(self.mirror_loop_count)
         # self.Mirror_Dungeons_Group.addSettingCard(self.sinner_choose)
         self.Mirror_Dungeons_Group.addSettingCard(self.theme_pack_choose)
+        self.Mirror_Dungeons_Group.addSettingCard(self.grace_of_the_dreaming_star_choose)
+        self.Mirror_Dungeons_Group.addSettingCard(self.ego_gift_choose)
         self.Luxcavation_Group.addSettingCard(self.luxcavation_loop_count)
         self.Luxcavation_Group.addSettingCard(self.luxcavation_exp_switch)
         self.Luxcavation_Group.addSettingCard(self.luxcavation_exp_choose)
@@ -80,6 +84,17 @@ class GameInterface(ScrollArea):
         )
 
         self.Mirror_Dungeons_Group = SettingCardGroup("Mirror Dungeons设置", self.scrollWidget)
+        self.mirror_dungeons_choose = ComboBoxSettingCardX("Mirror_Dungeons.mirror_dungeons_choose", FIF.MORE,
+                                                           "镜像迷宫",
+                                                           "选择镜像迷宫",
+                                                           ["梦中之镜", "呼啸之镜"],
+                                                           [1, 2])
+        self.ego_gift_choose = ComboBoxSettingCardX("Mirror_Dungeons.ego_gift_choose", FIF.MORE,
+                                                    "E.G.O饰品",
+                                                    "选择E.G.O饰品",
+                                                    ["烧伤", "流血", "震颤", "破裂", "沉沦", "呼吸法", "充能", "斩击",
+                                                     "突刺", "打击"],
+                                                    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
         self.mirror_only_flag = SwitchSettingCardX(
             FIF.FLAG, "全自动循环", "需处于游戏主界面时启用,如已处于镜像迷宫内请关闭",
             "Mirror_Dungeons.mirror_only_flag")
@@ -92,6 +107,10 @@ class GameInterface(ScrollArea):
         self.theme_pack_choose = PushSettingCardX("修改", FIF.INFO, "指定主题包",
                                                   f"{cfgm.get("Mirror_Dungeons.theme_pack_choose")}", None,
                                                   "Mirror_Dungeons.theme_pack_choose")
+        self.grace_of_the_dreaming_star_choose = PushSettingCardX("修改", FIF.INFO, "指定梦中的星之恩惠",
+                                                                  f"{cfgm.get("Mirror_Dungeons.grace_of_the_dreaming_star_choose")}",
+                                                                  None,
+                                                                  "Mirror_Dungeons.grace_of_the_dreaming_star_choose")
         self.sinner_choose = PushSettingCardX("修改", FIF.INFO, "指定角色",
                                               f"{cfgm.get("Mirror_Dungeons.sinner_choose")}", None,
                                               "Mirror_Dungeons.sinner_choose")
@@ -101,6 +120,10 @@ class GameInterface(ScrollArea):
                                              "请输入循环次数:", "LineEdit", validator=QIntValidator(1, 100)))
         self.theme_pack_choose.clicked.connect(
             lambda: self.open_theme_pack_dialog("Mirror_Dungeons.theme_pack_choose", self.theme_pack_choose))
+
+        self.grace_of_the_dreaming_star_choose.clicked.connect(
+            lambda: self.open_grace_of_the_dreaming_star_dialog("Mirror_Dungeons.grace_of_the_dreaming_star_choose",
+                                                                self.grace_of_the_dreaming_star_choose))
 
         self.sinner_choose.clicked.connect(
             lambda: self.open_sinner_dialog("Mirror_Dungeons.sinner_choose", self.sinner_choose))
@@ -129,6 +152,238 @@ class GameInterface(ScrollArea):
                                              "设置循环次数", "请输入循环次数:", "LineEdit",
                                              validator=QIntValidator(1, 100)))
 
+    def initConfig(self):
+        cfgm.set("Mirror_Dungeons.ego_gift_list", {
+            '烧伤': [
+                '炼狱炎蝶之梦',
+                '尘归尘',
+                '炽热的羽毛',
+                '单点打击逻辑电路',
+                '炎鳞',
+                '土归土',
+                '烧焦的圆盘',
+                '炽热的智慧',
+                '镇魂',
+                '熔化的石蜡',
+                '偏振光',
+                '郁火',
+                '火光花',
+                '业火残片',
+                '万年炖锅',
+                '万年炉火',
+                '烹饪秘诀书',
+                '盗来的火焰',
+                '火热多汁琵琶腿'
+            ],
+            '流血': [
+                '嗜伤甲虫',
+                '染血铁钉',
+                '白棉花',
+                '又小又可能很坏的玩偶',
+                '烟霾与铁丝网',
+                '锈蚀的美工刀',
+                '红染棉花',
+                '锈蚀的笼头',
+                '血雾',
+                '被扣留的颂歌',
+                '纠缠捆束',
+                '敬畏',
+                '安息之地',
+                '魅惑残片',
+                '蜜拉卡',
+                '撕裂的血袋',
+                '虔诚',
+                '出血性休克',
+                '封装蛆虫',
+                '钉与锤之书',
+                '污秽',
+                '被污染的针与线',
+                '破碎的刀刃',
+                '孝心'
+            ],
+            '震颤': [
+                '绿光果实',
+                '融化的眼球',
+                '辉光变动仪',
+                '震荡手环',
+                '暴雨',
+                '残响',
+                '真理之钟',
+                '震颤耦合',
+                '生物剧毒药瓶',
+                '剧毒外皮',
+                '酸味的酒香',
+                '镜触觉通感',
+                '齿轮发条',
+                '惰性残片',
+                '宝石振子',
+                '摇晃的酒桶',
+                '嵌合的齿轮',
+                '震中',
+                '无振八方钟',
+                '油腻的扳手',
+                '银色的表壳',
+                '褪色的表壳',
+                '蚀刻的指针',
+                '锈蚀的指针',
+                '涓滴之杯',
+                '怀表：Type L',
+                '怀表：Type E',
+                '怀表：Type Y',
+                '怀表：Type P'
+            ],
+            '破裂': [
+                '成捆的符咒',
+                '玫瑰王冠',
+                '雷击木',
+                '标准负荷电池',
+                '荆棘套索',
+                '快感',
+                '损坏的左轮手枪',
+                '荧光灯',
+                '恍惚镜',
+                '有烟火药',
+                '骨桩',
+                '破伞',
+                '寻死者',
+                '欲望残片',
+                '终末的碎片',
+                '荆棘捕绳',
+                '奇怪的石像',
+                '破绽',
+                '黑檀胸针',
+                '未寄出的信',
+                '干巴柴涩鸡胸肉',
+                '废料蟹脑髓泡酒'
+            ],
+            '沉沦': [
+                '赤色指令',
+                '荆棘之路',
+                '融化的时钟发条',
+                '仲冬夜之噩梦',
+                '遗骸碎片',
+                '美感',
+                '无头肖像',
+                '破碎罗盘',
+                '黑色乐谱',
+                '古木陷阱',
+                '破布',
+                '庄严',
+                '彼方之星',
+                '蚕食残片',
+                '如歌',
+                '褪色的外套',
+                '碎裂的骨片',
+                '浪景球',
+                '袭来的波浪',
+                '冰封的哀嚎',
+                '霜冻足迹',
+                '精神污染加速气体',
+                '泄露的脑啡肽',
+                '安息'
+            ],
+            '呼吸法': [
+                '烟斗',
+                '石冢',
+                '四叶草',
+                '追忆吊坠',
+                '雾化吸入器',
+                '明镜止水',
+                '内啡肽试剂组',
+                '马蹄铁饰物',
+                '福袋',
+                '魔鬼所享',
+                '绿色鞘翅',
+                '老旧的木雕人偶',
+                '留恋',
+                '骄慢残片',
+                '某日的记忆',
+                '天使所私',
+                '追忆',
+                '桶装烈酒',
+                '捕鲸枪义腿',
+                '照亮前方的汽灯',
+                '毛球帽',
+                '巨大的礼物袋',
+                '损坏的刀刃',
+                '损坏的竹笠'
+            ],
+            '充能': [
+                '员工证',
+                '便携式电源插座',
+                '夜视镜',
+                '简历',
+                '护腕',
+                '避雷针',
+                '充能式手套',
+                '物理屏蔽力场',
+                '第一类永动机',
+                '不间断电源装置',
+                '解除限制的除颤仪',
+                '巡逻用手电筒',
+                '仿造发电机',
+                '摩擦残片',
+                '微缩电线杆',
+                '1B型八角螺栓',
+                '绝缘子',
+                '第五类永动机',
+                'E型次元短剑',
+                '便携式力场电池',
+                '生物发电电池',
+                '心脏反应模块',
+                '义体关节伺服电机',
+                '自动关节',
+                '过度充能电池',
+                '永动伺服电机',
+                '心动力宝石',
+                '错位的晶体管'
+            ],
+            '斩击': [
+                '梦中的电子羊',
+                '手术用刀',
+                '虚饰的和平',
+                '裁缝用剪刀',
+                '决意',
+                '宣判之刻',
+                '被剪去的记忆',
+                '磨损的砥石',
+                '拐杖短剑',
+                '云纹鹤颈瓶',
+                '破碎的大剑',
+                '锈蚀的刀柄',
+                '红色流苏',
+                '壮观',
+                '不动',
+                '陈旧的长袍'
+            ],
+            '突刺': [
+                '黏性淤浆',
+                '头骨收藏',
+                '木工用长钉',
+                '曾经的祝福',
+                '撕裂的弹带',
+                '磨尖的树枝',
+                '破洞的记忆',
+                '高弹性钢鞋',
+                '证明的羽饰',
+                '磨破的衣袖',
+                '决斗范本第三卷'
+            ],
+            '打击': [
+                '此刻的神色',
+                '谷底之星',
+                '作祟',
+                '加压绷带',
+                '时间缰绳',
+                '紧握的雕像',
+                '破碎的记忆',
+                '次元分类回收箱',
+                '口袋助记卡',
+                '次元知觉变体',
+                '复仇账簿'
+            ]
+        })
+
     def open_setting_dialog(self, setting_key, setting_card, dialog_title, label_text, setting_type, **kwargs):
         initial_value = cfgm.get(setting_key)
 
@@ -152,8 +407,15 @@ class GameInterface(ScrollArea):
                            '无作为者',
                            '巢，工坊，技术', '落花', '落泪者们', '无改变者', '湖的世界', '伏行深渊', '定义为恶',
                            '宅邸的副产物',
-                           '某个世界', '地狱鸡', '去·海·边', '20区的奇迹', '肉斩骨断', '时间杀人时间', 'WARP快车谋杀案',
-                           '紫罗兰的正午', '斩切者们', '当斩之物', '穿刺者们', '当刺之物', '破坏者们', '当碎之物',
+                           '某个世界', '心意相悖', '再次开放的拉·曼却领', '无尽的队列', '地狱鸡', '去·海·边',
+                           '20区的奇迹',
+                           '肉斩骨断', '时间杀人时间',
+                           'WARP快车谋杀案',
+                           '紫罗兰的正午', '折射轨道1号线', '折射轨道2号线', '折射轨道3号线', '折射轨道4号线',
+                           '斩切者们', '当斩之物',
+                           '穿刺者们',
+                           '当刺之物', '破坏者们',
+                           '当碎之物',
                            '压抑的愤怒',
                            '解放的暴怒', '受情感压抑者', '沉迷的色欲', '捆缚的色欲', '因情感困惑者', '徒劳的怠惰',
                            '停滞的怠惰',
@@ -198,6 +460,32 @@ class GameInterface(ScrollArea):
         ]
 
         dialog = CustomizableDialog("选择角色", layout_config, parent=self.window())
+
+        sinner_list_widget = dialog.component_references.get("sinner_list")
+        if sinner_list_widget:
+            for i in range(sinner_list_widget.count()):
+                item = sinner_list_widget.item(i)
+                if item.text() in selected_sinner:
+                    item.setSelected(True)
+
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            values = dialog.get_values()
+            selected_sinner = values.get("sinner_list", [])
+            cfgm.set(setting_key, selected_sinner)
+            formatted_content = ', '.join(selected_sinner)
+            setting_card.setContent(formatted_content)
+
+    def open_grace_of_the_dreaming_star_dialog(self, setting_key, setting_card):
+        available_sinner = ['起始之星', '层积星云', '星际旅行', '倾落的流星雨', '双星商店', '卫星商店', '星云的宠爱',
+                            '星芒的引导', '偶然的彗星', '全面的可能性']
+
+        selected_sinner = cfgm.get(setting_key) or []
+
+        layout_config = [
+            {"type": "list", "key": "sinner_list", "options": available_sinner},
+        ]
+
+        dialog = CustomizableDialog("选择恩惠", layout_config, parent=self.window())
 
         sinner_list_widget = dialog.component_references.get("sinner_list")
         if sinner_list_widget:

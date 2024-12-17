@@ -3,14 +3,15 @@
 """
     onnx 模型转 tensorrt 模型，并使用 tensorrt python api 推理
 """
-
+import math
 import os
-
+import threading
 import cv2
+import time
 import numpy as np
 import tensorrt as trt
+from tqdm import tqdm
 from cuda import cudart
-
 from src.common.tensorrt import calibrator
 from src.common.tensorrt.config import *
 from src.common.tensorrt.preprocess import preprocess
@@ -54,8 +55,9 @@ class YoloTRT:
         else:
             return self.build_engine()
 
+    import time
+
     def build_engine(self):
-        """从 ONNX 文件构建 TensorRT 引擎"""
         builder = trt.Builder(self.logger)
         network = builder.create_network(1 << int(trt.NetworkDefinitionCreationFlag.EXPLICIT_BATCH))
         config = builder.create_builder_config()
@@ -74,24 +76,68 @@ class YoloTRT:
         if not os.path.exists(onnx_file):
             raise FileNotFoundError(f"未找到 ONNX 文件：'{onnx_file}'！")
 
-        with open(onnx_file, "rb") as model:
-            if not parser.parse(model.read()):
+        with open(onnx_file, "rb") as model, tqdm(total=100, desc="解析 ONNX 文件", unit="%", leave=False) as pbar:
+            model_data = model.read()
+            if not parser.parse(model_data):
                 for error in range(parser.num_errors):
                     print(f"ONNX 解析错误：{parser.get_error(error)}")
                 raise RuntimeError("解析 ONNX 文件失败")
+            pbar.update(100)
+            pbar.close()
 
         print("成功解析 ONNX 文件")
         input_tensor = network.get_input(0)
         profile = builder.create_optimization_profile()
-        profile.set_shape(input_tensor.name, [1, 3, kInputH, kInputW], [1, 3, kInputH, kInputW],
-                          [1, 3, kInputH, kInputW])
+        profile.set_shape(input_tensor.name, [1, 3, 640, 640], [1, 3, 1024, 1024],
+                          [1, 3, 1280, 1280])
         config.add_optimization_profile(profile)
 
-        engine_data = builder.build_serialized_network(network, config)
-        if not engine_data:
-            raise RuntimeError("构建 TensorRT 引擎失败")
+        start_time = time.time()
+        max_time = 600
+        total_progress = 100
+        current_progress = 0
 
-        print("成功构建 TensorRT 引擎")
+        def nonlinear_progress(x, total_steps):
+            scale = 10
+            return min(int((math.log(x + 1) / math.log(total_steps + 1)) * 100), total_progress)
+
+        with tqdm(total=total_progress, desc="构建 TensorRT 引擎", unit="%", leave=True) as pbar:
+            engine_build_started = False
+            engine_data = None
+            elapsed_time = 0
+            last_progress = 0
+
+            while current_progress < total_progress:
+                elapsed_time = time.time() - start_time
+
+                if not engine_build_started:
+                    engine_build_started = True
+                    build_thread = threading.Thread(target=lambda: builder.build_serialized_network(network, config))
+                    build_thread.start()
+
+                if engine_build_started and not build_thread.is_alive():
+                    engine_data = builder.build_serialized_network(network, config)
+                    if not engine_data:
+                        raise RuntimeError("构建 TensorRT 引擎失败")
+
+                    while current_progress < total_progress:
+                        current_progress += 5
+                        pbar.update(5)
+                        time.sleep(0.2)
+                    break
+
+                current_progress = nonlinear_progress(elapsed_time, max_time)
+                increment = current_progress - last_progress
+                if increment > 0:
+                    pbar.update(increment)
+                    last_progress = current_progress
+
+                time.sleep(0.5)
+
+        pbar.close()
+        total_time = time.time() - start_time
+        print(f"成功构建 TensorRT 引擎，耗时 {total_time:.2f} 秒")
+
         with open(self.trt_file, "wb") as f:
             f.write(engine_data)
 
@@ -106,9 +152,16 @@ class YoloTRT:
         for name in io_tensor_names:
             shape = self.context.get_tensor_shape(name)
             dtype = trt.nptype(self.engine.get_tensor_dtype(name))
-            buffer_h.append(np.empty(shape, dtype=dtype))
-            buffer_d.append(cudart.cudaMalloc(buffer_h[-1].nbytes)[1])
-            self.context.set_tensor_address(name, int(buffer_d[-1]))
+            if dtype == np.float64:
+                dtype = np.float32
+
+            try:
+                buffer_h.append(np.empty(shape, dtype=dtype))
+                buffer_d.append(cudart.cudaMalloc(buffer_h[-1].nbytes)[1])
+                self.context.set_tensor_address(name, int(buffer_d[-1]))
+            except MemoryError as e:
+                print(f"内存分配失败: {e}")
+                raise
 
         return buffer_h, buffer_d
 
