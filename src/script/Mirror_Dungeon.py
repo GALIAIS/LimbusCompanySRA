@@ -105,7 +105,7 @@ class Mirror_Dungeon:
                                                                                 ['烧伤', '流血', '突刺', '打击']):
                     logger.info("选择初始饰品")
                     cfg.img_event.clear()
-                    choose_random_ego_gift()
+                    choose_initial_ego_gift()
                     continue
 
                 if (text_exists(cfg.img_src, 'E.G.O饰品信息') or text_exists(cfg.img_src,
