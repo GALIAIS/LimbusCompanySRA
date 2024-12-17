@@ -2,7 +2,7 @@
 
 [![Python](https://img.shields.io/badge/Python-3.12%2B-blue)](https://www.python.org/downloads/) [![License](https://img.shields.io/badge/License-AGPL_3.0-green)](https://opensource.org/license/agpl-v3)
 
-**[点击下载最新版本](releases/latest)**
+**[点击下载最新版本](https://github.com/GALIAIS/LimbusCompanySRA/releases)**
 
 **多语言版本：**
 
