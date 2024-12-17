@@ -257,7 +257,6 @@ class Mirror_Dungeon:
                                                                                                        '治疗罪人')
 
     def is_battle_interface(self):
-        moveto(1380, 700)
         return (
                 text_exists(cfg.img_src, '进入')
                 or text_exists(cfg.img_src, '通关奖励')

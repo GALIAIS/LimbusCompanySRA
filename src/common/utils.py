@@ -21,7 +21,6 @@ import pywinctl as pwc
 import win32gui
 from attrs import define
 from loguru import logger
-from paddleocr import PaddleOCR
 
 # from paddleocr import PaddleOCR
 from src.app.utils.ConfigManager import cfgm
@@ -40,7 +39,7 @@ ocr_lock = threading.Lock()
 bboxes_lock = threading.Lock()
 logging.disable(logging.DEBUG)
 
-ocr = PaddleOCR(use_angle_cls=True, lang="ch")
+# ocr = PaddleOCR(use_angle_cls=True, lang="ch")
 
 ocr_engine = None
 
