@@ -28,7 +28,7 @@ event_handlers = {
     EventType.EncounterReward: choose_encounter_reward_card,
     EventType.PathChosen: lambda: (choose_path(), enter_event()),
     EventType.Shop: shop_buy,
-    EventType.BattleInterface: battle_choose_characters,
+    EventType.BattleInterface: lambda: (enter_event(), battle_choose_characters()),
     EventType.InBattle: start_battle,
     EventType.AbnormalityEncounter: abnormality_encounters_event,
     EventType.ServerError: server_error,
