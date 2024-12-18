@@ -266,6 +266,8 @@ def choose_encounter_reward_card():
         cfg.img_event.wait(timeout=5)
         cfg.bboxes_event.wait(timeout=5)
         if text_exists(cfg.img_src, '选择遭遇战奖励卡') and not text_exists(cfg.img_src, r'1/1'):
+            if text_exists(cfg.img_src, r'仍有选择奖励的机会') or text_exists(cfg.img_src, r'要在不选择奖励'):
+                check_text_and_clickR('取消')
             if text_exists(cfg.img_src, r'获得.+经费'):
                 check_text_and_clickR(r'获得.+经费')
             elif text_exists(cfg.img_src, r'获得.+经费') and text_exists(cfg.img_src, r'概率获得'):
