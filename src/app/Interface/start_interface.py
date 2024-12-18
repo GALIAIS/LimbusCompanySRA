@@ -37,7 +37,7 @@ class StartInterface(ScrollArea):
 
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.check_task_status)
-        self.timer.start(2000)
+        self.timer.start(3000)
 
     def initWidget(self):
         """初始化滚动区域及样式"""

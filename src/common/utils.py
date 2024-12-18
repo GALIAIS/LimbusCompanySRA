@@ -363,6 +363,106 @@ def move_to_center_and_dragR(bbox: list, direction: str = 'down', distance: int 
         logger.error(f"拖拽到边界框中心失败: {e}")
 
 
+def calculate_center(coordinates: list) -> tuple:
+    """
+    计算边界框中心点坐标。
+
+    Args:
+        coordinates (list): OCR 结果中的坐标列表，包含四个点。
+
+    Returns:
+        tuple: 中心点坐标 (x, y)。
+    """
+    if len(coordinates) == 4:
+        x0, y0 = coordinates[0]
+        x1, y1 = coordinates[2]
+        return int((x0 + x1) / 2), int((y0 + y1) / 2)
+    else:
+        raise ValueError("边界框的坐标数量不正确，应为 4 个点。")
+
+
+def get_drag_offset(drag_offset: int, direction: str) -> tuple:
+    """
+    根据方向和偏移量计算拖拽的最终目标偏移值。
+
+    Args:
+        drag_offset (int): 拖拽偏移量。
+        direction (str): 拖拽方向，支持 'down', 'up', 'left', 'right'。
+
+    Returns:
+        tuple: 偏移量 (offset_x, offset_y)。
+    """
+    directions = {
+        "down": (0, drag_offset),
+        "up": (0, -drag_offset),
+        "left": (-drag_offset, 0),
+        "right": (drag_offset, 0),
+    }
+    if direction in directions:
+        return directions[direction]
+    else:
+        raise ValueError(f"无效的拖拽方向: {direction}，请使用 'down', 'up', 'left', 'right' 之一。")
+
+
+def drag_to_target(start_coords: tuple, drag_offset: tuple) -> None:
+    """
+    执行鼠标拖拽操作。
+
+    Args:
+        start_coords (tuple): 起始坐标 (x, y)。
+        drag_offset (tuple): 拖拽偏移量 (offset_x, offset_y)。
+
+    Returns:
+        None
+    """
+    try:
+        end_coords = (start_coords[0] + drag_offset[0], start_coords[1] + drag_offset[1])
+        current_mouse_pos = get_mouse_pos()
+
+        move_mouse_to(current_mouse_pos[0], current_mouse_pos[1], start_coords[0], start_coords[1])
+        mouse_down(start_coords[0], start_coords[1])
+        move_mouse_to(start_coords[0], start_coords[1], end_coords[0], end_coords[1])
+        mouse_up(end_coords[0], end_coords[1])
+        # logger.info(f"拖拽完成：从 {start_coords} 到 {end_coords}")
+    except Exception as e:
+        logger.error(f"鼠标拖拽操作失败: {e}")
+
+
+def locate_and_drag(img_src: str, target_text: str, drag_offset: int = 300, direction: str = 'down') -> None:
+    """
+    根据图像和目标文本定位并拖拽。
+
+    Args:
+        img_src (str): 图像路径。
+        target_text (str): 目标文本内容。
+        drag_offset (int): 拖拽的偏移量（像素）。
+        direction (str): 拖拽方向，支持 'down', 'up', 'left', 'right'。
+
+    Returns:
+        None
+    """
+    try:
+        ocr_data = get_ocrx_data(img_src)
+        ocr_results = ocrx_process(ocr_data)
+
+        offset_x, offset_y = get_drag_offset(drag_offset, direction)
+
+        for result in ocr_results:
+            if result.get('text') == target_text and 'coordinates' in result:
+                try:
+                    target_coords = calculate_center(result['coordinates'])
+                    # logger.info(f"找到目标文本 '{target_text}'，中心点坐标: {target_coords}")
+
+                    drag_to_target(target_coords, (offset_x, offset_y))
+                    return
+                except ValueError as ve:
+                    logger.warning(f"处理目标文本 '{target_text}' 的坐标失败: {ve}")
+
+        logger.warning(f"未找到目标文本: {target_text}")
+    except Exception as e:
+        logger.error(f"定位和拖拽操作失败: {e}")
+
+
 # 计算边界框的中心位置
 def center_of_bbox(bbox: list):
     try:
@@ -1057,22 +1157,17 @@ class WindowManager:
             gdi32 = ctypes.windll.gdi32
             hdc = win32gui.GetDC(None)
 
-            # 获取逻辑宽度和高度
             logical_width = gdi32.GetDeviceCaps(hdc, 8)
             logical_height = gdi32.GetDeviceCaps(hdc, 10)
 
-            # 获取系统真实宽度和高度
             physical_width = user32.GetSystemMetrics(0)
             physical_height = user32.GetSystemMetrics(1)
 
-            # 计算 DPI 缩放因子
             width_scale = logical_width / physical_width
             height_scale = logical_height / physical_height
 
-            # 获取系统 DPI
             cfg.system_dpi = user32.GetDpiForSystem()
 
-            # 更新到配置
             cfg.width_scale = width_scale
             cfg.height_scale = height_scale
             cfg.original_width = physical_width
@@ -1593,9 +1688,6 @@ def wait_for_model_recognition(recognition_func) -> bool:
         return False
 
 
-# def window_update_data():
-#     cfg.img_src = getWindowShot()
-#     cfg.bboxes = getDetection(cfg.img_src)
 def window_update_data():
     cfg.img_src = getWindowShot()
     cfg.bboxes = getDetectionTRT(cfg.img_src)
@@ -1605,29 +1697,6 @@ def window_update_data():
 def window_update_dataX():
     move_mouse_random()
     window_update_data()
-
-
-# IMGSRC数据更新
-# def imgsrc_update_thread():
-#     while True:
-#         with cfg.lock:
-#             cfg.img_src = getWindowShot()
-#             img_update_event.set()
-#             time.sleep(0.5)
-# BBOXES数据更新
-# def bbox_update_thread():
-#     while True:
-#         with cfg.lock:
-#             cfg.bboxes = getDetection(cfg.img_src)
-#             bboxes_update_event.set()
-#             time.sleep(0.5)
-# OCR数据更新
-# def ocr_update_thread():
-#     while True:
-#         with cfg.lock:
-#             cfg.ocr_result = ocr_process(get_ocr_data(cfg.img_src))
-#             ocr_result_event.set()
-#             time.sleep(0.5)
 
 
 """WindowManager相关"""
