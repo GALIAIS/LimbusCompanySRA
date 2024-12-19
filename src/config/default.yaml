@@ -1,15 +1,15 @@
 BaseSetting:
-    Game_path: F:\SteamLibrary\steamapps\common\Limbus Company\LimbusCompany.exe
-    Model_path: I:\AI\LimbusCompany\LimbusCompanySRA\src\model\LBC.plan
-    Pip_path: F:\.virtualenvs\LimbusCompanySRA\Scripts\pip.exe
-    Python_path: F:\.virtualenvs\LimbusCompanySRA\Scripts\python.exe
+    Game_path:
+    Model_path:
+    Pip_path:
+    Python_path:
     ocr_language:
         '1': config_chinese.txt
         '2': config_en.txt
         '3': config_korean.txt
         '4': config_japan.txt
         selected: 1
-    root_path: I:\AI\LimbusCompany\LimbusCompanySRA
+    root_path:
 Enkephalin:
     auto_exchange_enkephalin: false
 Luxcavation:
@@ -22,8 +22,8 @@ Luxcavation:
         '6': 经验采光#6
         '7': 经验采光#7
         selected: 4
-    exp_switch: false
-    luxcavation_loop_count: 2
+    exp_switch: true
+    luxcavation_loop_count: 1
     thread_choose:
         '1': 傲慢
         '2': 嫉妒
@@ -274,8 +274,8 @@ Mirror_Dungeons:
         '2': 呼啸之镜
         selected: 1
     mirror_loop_count: 1
-    mirror_only_flag: true
-    mirror_switch: true
+    mirror_only_flag: false
+    mirror_switch: false
     sinner_choose:
     - 李箱
     - 浮士德
