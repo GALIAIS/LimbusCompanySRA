@@ -1,7 +1,7 @@
 import atexit
-import os
-import sys
 from pathlib import Path
+from src.app.utils.PathFind import *
+import ctypes
 
 if getattr(sys, 'frozen', False):
     BASE_DIR = Path(sys.argv[0]).resolve().parent
@@ -9,16 +9,25 @@ else:
     BASE_DIR = Path(os.path.abspath("."))
 
 sys.path.append(str(BASE_DIR))
+
 from PySide6.QtCore import QSize, QEventLoop, QTimer
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication, QMessageBox
 from qfluentwidgets import (NavigationItemPosition, FluentIcon as FIF, MSFluentWindow,
                             setThemeColor, setTheme, Theme, SplashScreen)
+from src.app.utils.ConfigManager import cfgm
+
+cfgm.set("BaseSetting.Model_path", find_model(str(BASE_DIR)))
 from src.app.Interface.game_interface import GameInterface
 from src.app.Interface.home_interface import HomeInterface
 from src.app.Interface.start_interface import StartInterface
 from src.app.Interface.setting_interface import SettingInterface
 from src.common.utils import is_process_running, kill_process
+
+whnd = ctypes.windll.kernel32.GetConsoleWindow()
+if whnd != 0:
+    ctypes.windll.user32.ShowWindow(whnd, 0)
+    ctypes.windll.kernel32.CloseHandle(whnd)
 
 
 class MainWindow(MSFluentWindow):
@@ -31,7 +40,7 @@ class MainWindow(MSFluentWindow):
     def init_window(self):
         setThemeColor('#810000', lazy=True)
         self.resize(900, 640)
-        setTheme(Theme.DARK, lazy=True)
+        setTheme(Theme.AUTO, lazy=True)
         self.setMicaEffectEnabled(False)
 
         self.titleBar.maxBtn.setDisabled(True)
@@ -60,7 +69,7 @@ class MainWindow(MSFluentWindow):
 
     def createSubInterface(self):
         loop = QEventLoop(self)
-        QTimer.singleShot(3000, loop.quit)
+        QTimer.singleShot(2000, loop.quit)
         loop.exec()
 
     def initInterface(self):
@@ -82,9 +91,6 @@ class MainWindow(MSFluentWindow):
         self.addSubInterface(self.setting_interface, FIF.SETTING, '设置', position=NavigationItemPosition.BOTTOM)
 
     def cleanup(self):
-        """
-        在程序退出时执行清理操作。
-        """
         processes_to_kill = ["PaddleOCR-json.exe"]
         for process_name in processes_to_kill:
             if is_process_running(process_name):
@@ -111,7 +117,7 @@ class MainWindow(MSFluentWindow):
 
 
 if __name__ == '__main__':
-    app = QApplication(sys.argv)
+    app = QApplication([])
     window = MainWindow()
     window.show()
     sys.exit(app.exec())

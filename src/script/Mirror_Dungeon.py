@@ -298,4 +298,4 @@ class Mirror_Dungeon:
         ) or text_exists(cfg.img_src, '探索结束奖励')
 
 
-mw = Mirror_Dungeon()
+MD = Mirror_Dungeon()

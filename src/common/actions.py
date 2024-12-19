@@ -642,19 +642,28 @@ def enter_event():
 def battle_choose_characters():
     """参战角色选择"""
     logger.info("参战角色选择界面")
+    choose_flag = None
     while True:
         cfg.img_event.wait(timeout=5)
         cfg.bboxes_event.wait(timeout=5)
         if not text_exists(cfg.img_src, r'\b12/12\b') and text_exists(cfg.img_src, '开始战斗'):
-            # check_label_and_click(cfg.bboxes, 'Start')
+            if show_countdown_dialog("编队角色选择", "确认是否在未选满的情况下开始战斗"):
+                choose_flag = True
             cfg.img_event.clear()
             cfg.bboxes_event.clear()
-            continue
+            while choose_flag:
+                cfg.img_event.wait(timeout=5)
+                cfg.bboxes_event.wait(timeout=5)
+                check_text_and_clickR('开始战斗')
+                if not text_exists(cfg.img_src, '开始战斗'):
+                    choose_flag = False
+                cfg.img_event.clear()
+                cfg.bboxes_event.clear()
         elif text_exists(cfg.img_src, r'\b12/12\b') and text_exists(cfg.img_src, '开始战斗'):
-            # check_label_and_click(cfg.bboxes, 'Start')
             check_text_and_clickR('开始战斗')
             cfg.img_event.clear()
             cfg.bboxes_event.clear()
+            continue
 
         cfg.img_event.wait(timeout=5)
         cfg.bboxes_event.wait(timeout=5)
@@ -993,7 +1002,7 @@ def run():
         process_name="镜像迷宫",
         switch_key="Mirror_Dungeons.mirror_switch",
         loop_count_key="Mirror_Dungeons.mirror_loop_count",
-        process_func=lambda: __import__('src.script.Mirror_Dungeon').script.Mirror_Dungeon.mw.start_mirror_dungeon()
+        process_func=lambda: __import__('src.script.Mirror_Dungeon').script.Mirror_Dungeon.MD.start_mirror_dungeon()
     )
 
     execute_process(

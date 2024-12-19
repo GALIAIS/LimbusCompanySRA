@@ -14,7 +14,6 @@ else:
 from src.common.actions import run
 from src.app.Interface.start_interface import *
 from src.common.logger_config import LoggerConfig
-from src.app.utils.ConfigManager import cfgm
 
 logger_config = LoggerConfig()
 logging.disable(logging.DEBUG)
