@@ -5,7 +5,7 @@ import winreg
 from typing import Optional
 
 
-def find_python(self, directory: str) -> Optional[str]:
+def find_python(directory: str) -> Optional[str]:
     for root, _, files in os.walk(directory):
         for file in files:
             if re.match(r"^python(\.exe)?$", file, re.IGNORECASE):
@@ -17,7 +17,7 @@ def find_python(self, directory: str) -> Optional[str]:
     return None
 
 
-def find_pip(self, directory: str) -> Optional[str]:
+def find_pip(directory: str) -> Optional[str]:
     for root, _, files in os.walk(directory):
         for file in files:
             if re.match(r"^pip(\.exe)?$", file, re.IGNORECASE):
@@ -29,7 +29,7 @@ def find_pip(self, directory: str) -> Optional[str]:
     return None
 
 
-def find_model(self, directory: str) -> Optional[str]:
+def find_model(directory: str) -> Optional[str]:
     for root, _, files in os.walk(directory):
         for file in files:
             if re.match(r"^LBC(\.plan)?$", file, re.IGNORECASE):
@@ -41,7 +41,7 @@ def find_model(self, directory: str) -> Optional[str]:
     return None
 
 
-def find_limbus(self, directory: str) -> Optional[str]:
+def find_limbus(directory: str) -> Optional[str]:
     for root, _, files in os.walk(directory):
         for file in files:
             if re.match(r"^LimbusCompany(\.exe)?$", file, re.IGNORECASE):
