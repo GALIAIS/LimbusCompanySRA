@@ -7,20 +7,20 @@
 }
 
 #bannerWidget {
-    background-color: black;
-    color: black;
+    background-color: #FFFFFF;
+    color: #FFFFFF;
     font-size: 35px;
     font-weight: bold;
 }
 
 #galleryLabel {
     font-family: Arial;
-    color: white;
+    color: #FFFFFF;
     font-size: 35px;
     font-weight: bold;
 }
 
 #footerWidget {
     font-size: 12px;
-    color: black;
+    color: #FFFFFF;
 }
