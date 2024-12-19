@@ -41,6 +41,8 @@
   * [📜 许可证](#-许可证)
   * [🐞 问题反馈](#-问题反馈)
   * [⭐ Star 支持](#-star-支持)
+  * [更多问题可加群讨论](#更多问题可加群讨论)
+  * [Star History](#star-history)
 <!-- TOC -->
 
 ---
@@ -228,3 +230,7 @@ cd LimbusCompanySRA
 ![QQ群](https://x.imgex.org/1/6764acbcdedac.jpg)
 
 ---
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=GALIAIS/LimbusCompanySRA&type=Date)](https://star-history.com/#GALIAIS/LimbusCompanySRA&Date)

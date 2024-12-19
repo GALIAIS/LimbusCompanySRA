@@ -41,6 +41,9 @@ An automation script designed for Limbus Company, providing OCR recognition, obj
   * [🤝 Contributing](#-contributing)
   * [📜 License](#-license)
   * [🐞 Bug Reports & Feedback](#-bug-reports--feedback)
+  * [⭐ Star Support](#-star-support)
+  * [For more questions, feel free to join our discussion group](#for-more-questions-feel-free-to-join-our-discussion-group-)
+  * [Star History](#star-history)
 <!-- TOC -->
 
 ---
@@ -228,3 +231,7 @@ Every Star feels like a cup of coffee ☕ for us—fueling our energy!
 ![QQ Group](https://x.imgex.org/1/6764acbcdedac.jpg)
 
 ---
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=GALIAIS/LimbusCompanySRA&type=Date)](https://star-history.com/#GALIAIS/LimbusCompanySRA&Date)

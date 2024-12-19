@@ -41,6 +41,9 @@ Limbus Company 用の自動化スクリプトです。OCR 認識、オブジェ�
   * [🤝 貢献](#-貢献)
   * [📜 ライセンス](#-ライセンス)
   * [🐞 バグ報告とフィードバック](#-バグ報告とフィードバック)
+  * [⭐ Star サポート](#-star-サポート)
+  * [質問があればお気軽にグループに参加してください](#質問があればお気軽にグループに参加してください-)
+  * [Star History](#star-history)
 <!-- TOC -->
 
 ---
@@ -228,3 +231,7 @@ cd LimbusCompanySRA
 ![QQグループ](https://x.imgex.org/1/6764acbcdedac.jpg)
 
 ---
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=GALIAIS/LimbusCompanySRA&type=Date)](https://star-history.com/#GALIAIS/LimbusCompanySRA&Date)
