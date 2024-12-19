@@ -18,29 +18,29 @@ An automation script designed for Limbus Company, providing OCR recognition, obj
 ## Table of Contents
 
 <!-- TOC -->
-* [LimbusCompanySRA](#limbuscompanysra)
+  * [LimbusCompanySRA](#limbuscompanysra)
   * [Table of Contents](#table-of-contents)
   * [✨ Features](#-features)
   * [🚀 Quick Start](#-quick-start)
     * [Prerequisites](#prerequisites)
     * [🛠️ **Installation Steps**](#-installation-steps)
-      * [**1️. Clone the Repository**](#1-clone-the-repository)
-      * [**2️. Download and Configure Python**](#2-download-and-configure-python)
-      * [**3️. Create a Virtual Environment (Recommended)**](#3-create-a-virtual-environment-recommended)
-      * [**4️. Install Dependencies**](#4-install-dependencies)
-      * [**5️. Run the Project**](#5-run-the-project)
+      * [**1. Clone the Repository**](#1-clone-the-repository)
+      * [**2. Download and Configure Python**](#2-download-and-configure-python)
+      * [**3. Create a Virtual Environment (Recommended)**](#3-create-a-virtual-environment-recommended)
+      * [**4. Install Dependencies**](#4-install-dependencies)
+      * [**5. Run the Project**](#5-run-the-project)
     * [⚙️ **Other Installation Methods**](#-other-installation-methods)
       * [**Using a Conda Environment**](#using-a-conda-environment)
   * [🖼️ Interface Preview](#-interface-preview)
     * [Basic Settings](#basic-settings)
-    * [Ember Gathering (Experience Gathering Available)](#ember-gatheringexperience-gathering-available)
+    * [Ember Gathering (Experience Gathering Available)](#ember-gathering-experience-gathering-available)
     * [Mirror Dungeon](#mirror-dungeon)
   * [⚙️ Configuration Parameters](#-configuration-parameters)
   * [📋 Implemented Features](#-implemented-features)
   * [🔮 Future Plans](#-future-plans)
   * [🤝 Contributing](#-contributing)
   * [📜 License](#-license)
-  * [🐞 Bug Reports & Feedback](#-bug-reports-feedback)
+  * [🐞 Bug Reports & Feedback](#-bug-reports--feedback)
 <!-- TOC -->
 
 ---
@@ -66,20 +66,20 @@ An automation script designed for Limbus Company, providing OCR recognition, obj
 
 ### 🛠️ **Installation Steps**
 
-#### **1️⃣ Clone the Repository**
+#### **1. Clone the Repository**
 
 ```bash
 git clone https://github.com/GALIAIS/LimbusCompanySRA.git
 cd LimbusCompanySRA
 ```
 
-#### **2️⃣ Download and Configure Python**
+#### **2. Download and Configure Python**
 
 1. Download **Python 3.12+** from the [official Python website](https://www.python.org/downloads/).
    - Recommended: Choose the **Windows installer**.
 2. During Python installation, ensure the "Add Python to PATH" option is checked.
 
-#### **3️⃣ Create a Virtual Environment (Recommended)**
+#### **3. Create a Virtual Environment (Recommended)**
 
 Using a virtual environment helps manage project dependencies effectively:
 
@@ -96,7 +96,7 @@ Using a virtual environment helps manage project dependencies effectively:
    ```
 4. After activation, the command prompt prefix will show `(venv)`, indicating that the virtual environment is active.
 
-#### **4️⃣ Install Dependencies**
+#### **4. Install Dependencies**
 
 1. Ensure the virtual environment is activated before running the following command:
    ```bash
@@ -111,7 +111,7 @@ Using a virtual environment helps manage project dependencies effectively:
      pip install --extra-index-url https://pypi.nvidia.com/ tensorrt-cu*-bindings tensorrt-cu*-libs
      ```
 
-#### **5️⃣ Run the Project**
+#### **5. Run the Project**
 Ensure the following conditions are met before starting the program:
 
 - **Resolution Requirement:** 1920 × 1200
@@ -213,5 +213,18 @@ This project is licensed under the [AGPL-3.0](https://opensource.org/license/agp
 ## 🐞 Bug Reports & Feedback
 
 If you encounter any issues or have suggestions, please submit them on the [Issues](https://github.com/GALIAIS/LimbusCompanySRA/issues) page.
+
+---
+
+## ⭐ Star Support
+
+If this project has been helpful to you, please give it a Star! ✨  
+
+Every Star feels like a cup of coffee ☕ for us—fueling our energy!  
+
+[Click here to give a Star](https://github.com/GALIAIS/LimbusCompanySRA/stargazers) and let us know you're following along!  
+
+## For more questions, feel free to join our discussion group  
+![QQ Group](https://x.imgex.org/1/6764acbcdedac.jpg)
 
 ---
