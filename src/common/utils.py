@@ -19,8 +19,13 @@ import pyautogui
 import pydirectinput as pdi
 import pywinctl as pwc
 import win32gui
+from PySide6.QtCore import QTimer, Qt
 from attrs import define
 from loguru import logger
+from PySide6.QtWidgets import QApplication, QMainWindow, QInputDialog, QFileDialog, QMessageBox, QVBoxLayout, \
+    QHBoxLayout, QPushButton, QLabel, QDialog, QListWidget, QLineEdit, QTreeWidgetItem, QTreeWidget, QCheckBox, \
+    QStackedWidget, QGroupBox
+from PySide6.QtGui import QGuiApplication
 
 # from paddleocr import PaddleOCR
 from src.app.utils.ConfigManager import cfgm
@@ -1111,8 +1116,9 @@ class WindowManager:
 
     def window_info(self):
         try:
-            window = pwc.getWindowsWithTitle(cfg.window_name)[0]
-            if window:
+            windows = pwc.getWindowsWithTitle(self.window_name)
+            if windows:
+                window = windows[0]
                 bbox = window.box
                 cfg.m_top = bbox.top + 38
                 cfg.m_left = bbox.left + 10
@@ -1120,15 +1126,11 @@ class WindowManager:
                 cfg.m_height = bbox.height - 45
 
                 self.screen_size = pdi.virtual_size()
-                cfg.update_screen_size(self.screen_size[2], self.screen_size[3], self.screen_size[0],
-                                       self.screen_size[1])
-                self.window = pwc.getWindowsWithTitle(self.window_name)
+                cfg.update_screen_size(*self.screen_size)
 
-                if self.window:
-                    self.window_size = self.window[0].box
-                    cfg.update_window_position(self.window_size[0], self.window_size[1], self.window_size[2],
-                                               self.window_size[3])
-                    return self.window_size
+                self.window_size = bbox
+                cfg.update_window_position(bbox[0], bbox[1], bbox[2], bbox[3])
+                return self.window_size
             return None
         except Exception as e:
             logger.error(f"获取窗口信息失败: {e}")
@@ -1136,16 +1138,18 @@ class WindowManager:
 
     def init_window(self):
         try:
-            self.window = pwc.getWindowsWithTitle(self.window_name)
-            if self.window:
-                self.hwnd = self.window[0].getHandle()
+            windows = pwc.getWindowsWithTitle(self.window_name)
+            if windows:
+                window = windows[0]
+                self.hwnd = window.getHandle()
                 self.result = True
                 cfg.handle = self.hwnd
-                if self.window[0].isMinimized:
-                    self.window[0].restore()
-                self.window[0].raiseWindow()
-                self.window[0].activate()
-                self.window[0].maximize()
+
+                if window.isMinimized:
+                    window.restore()
+                window.raiseWindow()
+                window.activate()
+                window.maximize()
             return True
         except Exception as e:
             logger.error(f"初始化窗口失败: {e}")
@@ -1177,20 +1181,20 @@ class WindowManager:
 
     def get_pid(self):
         try:
-            self.pid = str(psutil.process_iter())
-            for self.process in self.pid:
-                if self.process.name() == cfg.window_process_name:
-                    cfg.pid = self.process.pid
-                    return self.process.pid
+            for process in psutil.process_iter(['pid', 'name']):
+                if process.info['name'] == self.window_process_name:
+                    cfg.pid = process.info['pid']
+                    return process.info['pid']
+            return None
         except Exception as e:
             logger.error(f"获取 PID 失败: {e}")
             return None
 
     def get_hwnd(self):
         try:
-            self.process = pwc.getWindowsWithTitle(self.window_name)
-            if self.process:
-                self.hwnd = self.process[0].getHandle()
+            windows = pwc.getWindowsWithTitle(self.window_name)
+            if windows:
+                self.hwnd = windows[0].getHandle()
                 cfg.handle = self.hwnd
                 return self.hwnd
         except Exception as e:
@@ -1220,14 +1224,14 @@ class WindowManager:
 
     def is_minimized(self):
         try:
-            return self.window[0].isMinimized() if self.window else False
+            return self.window[0].isMinimized if self.window else False
         except Exception as e:
             logger.error(f"检查窗口是否最小化失败: {e}")
             return False
 
     def is_active(self):
         try:
-            return self.window[0].isActive() if self.window else False
+            return self.window[0].isActive if self.window else False
         except Exception as e:
             logger.error(f"检查窗口是否激活失败: {e}")
             return False
@@ -1847,6 +1851,495 @@ def ocr_update_thread():
 
 
 """进程相关"""
+
+
+def show_message_box(title="提示", message="这是一个消息框", icon=QMessageBox.Information):
+    """
+    显示消息框
+    :param title: 窗口标题
+    :param message: 显示内容
+    :param icon: 消息框图标类型（Information, Warning, Critical, Question）
+    """
+    app = QApplication.instance() or QApplication([])
+    msg_box = QMessageBox()
+    msg_box.setWindowTitle(title)
+    msg_box.setText(message)
+    msg_box.setIcon(icon)
+    msg_box.addButton(QMessageBox.Ok)
+    msg_box.exec()
+
+
+def show_confirmation_dialog(title="确认", message="你确定要继续吗？"):
+    """
+    显示确认对话框，带有“是”和“否”按钮
+    :param title: 窗口标题
+    :param message: 提示信息
+    :return: 用户选择的布尔值，True 表示选择了“是”，False 表示选择了“否”
+    """
+    app = QApplication.instance() or QApplication([])
+    reply = QMessageBox.question(
+        None, title, message,
+        QMessageBox.Yes | QMessageBox.No, QMessageBox.No
+    )
+    return reply == QMessageBox.Yes
+
+
+def select_file(title="选择文件", file_filter="所有文件 (*)"):
+    """
+    文件选择对话框
+    :param title: 对话框标题
+    :param file_filter: 文件过滤器（如 "图片文件 (*.png *.jpg)"）
+    :return: 用户选择的文件路径，未选择返回 None
+    """
+    app = QApplication.instance() or QApplication([])
+    file_path, _ = QFileDialog.getOpenFileName(None, title, "", file_filter)
+    return file_path
+
+
+def select_folder(title="选择文件夹"):
+    """
+    文件夹选择对话框
+    :param title: 对话框标题
+    :return: 用户选择的文件夹路径，未选择返回 None
+    """
+    app = QApplication.instance() or QApplication([])
+    folder_path = QFileDialog.getExistingDirectory(None, title)
+    return folder_path
+
+
+def get_user_input(title="输入", message="请输入内容", default_value=""):
+    """
+    输入对话框，获取用户输入
+    :param title: 对话框标题
+    :param message: 提示信息
+    :param default_value: 输入框的默认值
+    :return: 用户输入的字符串，点击取消返回 None
+    """
+    app = QApplication.instance() or QApplication([])
+    text, ok = QInputDialog.getText(None, title, message, text=default_value)
+    return text if ok else None
+
+
+def select_from_list(title="选择", message="请选择一项", items=None):
+    """
+    显示下拉选择框，让用户选择列表中的一项
+    :param title: 对话框标题
+    :param message: 提示信息
+    :param items: 可供选择的列表项
+    :return: 用户选择的项，点击取消返回 None
+    """
+    app = QApplication.instance() or QApplication([])
+    if items is None:
+        items = []
+    item, ok = QInputDialog.getItem(None, title, message, items, 0, False)
+    return item if ok else None
+
+
+def show_critical_error(title="错误", message="发生了一个严重错误！"):
+    """
+    显示错误消息框
+    :param title: 对话框标题
+    :param message: 错误信息
+    """
+    show_message_box(title=title, message=message, icon=QMessageBox.Critical)
+
+
+def show_warning(title="警告", message="这是一个警告消息"):
+    """
+    显示警告消息框
+    :param title: 对话框标题
+    :param message: 警告信息
+    """
+    show_message_box(title=title, message=message, icon=QMessageBox.Warning)
+
+
+def show_countdown_dialog(title="倒计时确认", message="请确认操作", countdown_time=10, default_choice=True):
+    """
+    显示一个带倒计时的确认对话框。
+    :param title: 窗口标题
+    :param message: 提示信息
+    :param countdown_time: 倒计时秒数
+    :param default_choice: 倒计时结束后的默认选择，True 表示“确认”，False 表示“取消”
+    :return: 用户选择的布尔值，True 表示选择了“确认”，False 表示选择了“取消”
+    """
+
+    class CountdownDialog(QDialog):
+        def __init__(self):
+            super().__init__()
+            self.setWindowTitle(title)
+            self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
+            self.countdown_time = countdown_time
+            self.user_choice = default_choice
+
+            self.message_label = QLabel(message)
+            self.message_label.setAlignment(Qt.AlignCenter)
+
+            self.countdown_label = QLabel(f"自动选择将在 {self.countdown_time} 秒后执行")
+            self.countdown_label.setAlignment(Qt.AlignCenter)
+            self.countdown_label.setStyleSheet("color: red; font-weight: bold;")
+
+            self.confirm_button = QPushButton("确认")
+            self.cancel_button = QPushButton("取消")
+            self.confirm_button.clicked.connect(self.confirm)
+            self.cancel_button.clicked.connect(self.cancel)
+
+            button_layout = QHBoxLayout()
+            button_layout.addWidget(self.confirm_button)
+            button_layout.addWidget(self.cancel_button)
+
+            layout = QVBoxLayout()
+            layout.addWidget(self.message_label)
+            layout.addWidget(self.countdown_label)
+            layout.addLayout(button_layout)
+            self.setLayout(layout)
+
+            self.timer = QTimer(self)
+            self.timer.timeout.connect(self.update_countdown)
+            self.timer.start(1000)
+
+        def update_countdown(self):
+            self.countdown_time -= 1
+            self.countdown_label.setText(f"自动选择将在 {self.countdown_time} 秒后执行")
+            if self.countdown_time <= 0:
+                self.timer.stop()
+                self.accept()
+
+        def confirm(self):
+            self.user_choice = True
+            self.accept()
+
+        def cancel(self):
+            self.user_choice = False
+            self.accept()
+
+    app = QApplication.instance() or QApplication([])
+    dialog = CountdownDialog()
+    dialog.exec()
+    return dialog.user_choice
+
+
+def show_multiselect_dialog(title="多选对话框", options=None):
+    """
+    简单的多选对话框。
+    :param title: 对话框标题
+    :param options: 可选项列表
+    :return: 用户选择的列表
+    """
+    if options is None:
+        options = []
+
+    class MultiSelectDialog(QDialog):
+        def __init__(self):
+            super().__init__()
+            self.setWindowTitle(title)
+            self.selected_items = []
+
+            self.list_widget = QListWidget()
+            self.list_widget.addItems(options)
+            self.list_widget.setSelectionMode(QListWidget.MultiSelection)
+
+            self.ok_button = QPushButton("确定")
+            self.cancel_button = QPushButton("取消")
+            self.ok_button.clicked.connect(self.accept)
+            self.cancel_button.clicked.connect(self.reject)
+
+            layout = QVBoxLayout()
+            layout.addWidget(self.list_widget)
+            layout.addWidget(self.ok_button)
+            layout.addWidget(self.cancel_button)
+            self.setLayout(layout)
+
+        def accept(self):
+            self.selected_items = [item.text() for item in self.list_widget.selectedItems()]
+            super().accept()
+
+    app = QApplication.instance() or QApplication([])
+    dialog = MultiSelectDialog()
+    if dialog.exec():
+        return dialog.selected_items
+    return []
+
+
+def show_checkbox_multiselect_dialog(title="多选对话框", options=None):
+    """
+    使用复选框的多选对话框。
+    :param title: 对话框标题
+    :param options: 可选项列表
+    :return: 用户选择的列表
+    """
+    if options is None:
+        options = []
+
+    class CheckBoxDialog(QDialog):
+        def __init__(self):
+            super().__init__()
+            self.setWindowTitle(title)
+            self.selected_items = []
+
+            self.layout = QVBoxLayout()
+            self.checkboxes = []
+
+            for option in options:
+                checkbox = QCheckBox(option)
+                self.layout.addWidget(checkbox)
+                self.checkboxes.append(checkbox)
+
+            self.ok_button = QPushButton("确定")
+            self.cancel_button = QPushButton("取消")
+            self.ok_button.clicked.connect(self.accept)
+            self.cancel_button.clicked.connect(self.reject)
+            self.layout.addWidget(self.ok_button)
+            self.layout.addWidget(self.cancel_button)
+
+            self.setLayout(self.layout)
+
+        def accept(self):
+            self.selected_items = [checkbox.text() for checkbox in self.checkboxes if checkbox.isChecked()]
+            super().accept()
+
+    app = QApplication.instance() or QApplication([])
+    dialog = CheckBoxDialog()
+    if dialog.exec():
+        return dialog.selected_items
+    return []
+
+
+def show_tree_multiselect_dialog(title="多选对话框", options=None):
+    """
+    树状结构的多选对话框。
+    :param title: 对话框标题
+    :param options: 可选项字典，键是父项，值是子项列表
+    :return: 用户选择的列表
+    """
+    if options is None:
+        options = {}
+
+    class TreeDialog(QDialog):
+        def __init__(self):
+            super().__init__()
+            self.setWindowTitle(title)
+            self.selected_items = []
+
+            self.tree_widget = QTreeWidget()
+            self.tree_widget.setHeaderHidden(True)
+
+            for parent, children in options.items():
+                parent_item = QTreeWidgetItem(self.tree_widget, [parent])
+                for child in children:
+                    child_item = QTreeWidgetItem(parent_item, [child])
+                    child_item.setCheckState(0, Qt.Unchecked)
+
+            self.ok_button = QPushButton("确定")
+            self.cancel_button = QPushButton("取消")
+            self.ok_button.clicked.connect(self.accept)
+            self.cancel_button.clicked.connect(self.reject)
+
+            layout = QVBoxLayout()
+            layout.addWidget(self.tree_widget)
+            layout.addWidget(self.ok_button)
+            layout.addWidget(self.cancel_button)
+            self.setLayout(layout)
+
+        def accept(self):
+            for i in range(self.tree_widget.topLevelItemCount()):
+                parent_item = self.tree_widget.topLevelItem(i)
+                for j in range(parent_item.childCount()):
+                    child_item = parent_item.child(j)
+                    if child_item.checkState(0) == Qt.Checked:
+                        self.selected_items.append(child_item.text(0))
+            super().accept()
+
+    app = QApplication.instance() or QApplication([])
+    dialog = TreeDialog()
+    if dialog.exec():
+        return dialog.selected_items
+    return []
+
+
+def show_searchable_multiselect_dialog(title="多选对话框", options=None):
+    """
+    可搜索的多选对话框。
+    :param title: 对话框标题
+    :param options: 可选项列表
+    :return: 用户选择的列表
+    """
+    if options is None:
+        options = []
+
+    class SearchableDialog(QDialog):
+        def __init__(self):
+            super().__init__()
+            self.setWindowTitle(title)
+            self.selected_items = []
+            self.all_options = options
+
+            self.search_box = QLineEdit()
+            self.search_box.setPlaceholderText("搜索...")
+            self.search_box.textChanged.connect(self.filter_options)
+
+            self.list_widget = QListWidget()
+            self.list_widget.addItems(options)
+            self.list_widget.setSelectionMode(QListWidget.MultiSelection)
+
+            self.ok_button = QPushButton("确定")
+            self.cancel_button = QPushButton("取消")
+            self.ok_button.clicked.connect(self.accept)
+            self.cancel_button.clicked.connect(self.reject)
+
+            layout = QVBoxLayout()
+            layout.addWidget(self.search_box)
+            layout.addWidget(self.list_widget)
+            layout.addWidget(self.ok_button)
+            layout.addWidget(self.cancel_button)
+            self.setLayout(layout)
+
+        def filter_options(self, text):
+            self.list_widget.clear()
+            filtered_options = [opt for opt in self.all_options if text.lower() in opt.lower()]
+            self.list_widget.addItems(filtered_options)
+
+        def accept(self):
+            self.selected_items = [item.text() for item in self.list_widget.selectedItems()]
+            super().accept()
+
+    app = QApplication.instance() or QApplication([])
+    dialog = SearchableDialog()
+    if dialog.exec():
+        return dialog.selected_items
+    return []
+
+
+def show_grouped_checkbox_multiselect_dialog(title="分组多选对话框", options=None):
+    """
+    分组复选框多选对话框。
+    :param title: 对话框标题
+    :param options: 可选项字典，键为组名，值为该组的选项列表
+    :return: 用户选择的列表
+    """
+    if options is None:
+        options = {}
+
+    class GroupedDialog(QDialog):
+        def __init__(self):
+            super().__init__()
+            self.setWindowTitle(title)
+            self.selected_items = []
+
+            self.layout = QVBoxLayout()
+            self.checkboxes = []
+
+            for group_name, group_options in options.items():
+                group_box = QGroupBox(group_name)
+                group_layout = QVBoxLayout()
+                for option in group_options:
+                    checkbox = QCheckBox(option)
+                    group_layout.addWidget(checkbox)
+                    self.checkboxes.append(checkbox)
+                group_box.setLayout(group_layout)
+                self.layout.addWidget(group_box)
+
+            self.ok_button = QPushButton("确定")
+            self.cancel_button = QPushButton("取消")
+            self.ok_button.clicked.connect(self.accept)
+            self.cancel_button.clicked.connect(self.reject)
+
+            button_layout = QHBoxLayout()
+            button_layout.addWidget(self.ok_button)
+            button_layout.addWidget(self.cancel_button)
+            self.layout.addLayout(button_layout)
+
+            self.setLayout(self.layout)
+
+        def accept(self):
+            self.selected_items = [checkbox.text() for checkbox in self.checkboxes if checkbox.isChecked()]
+            super().accept()
+
+    app = QApplication.instance() or QApplication([])
+    dialog = GroupedDialog()
+    if dialog.exec():
+        return dialog.selected_items
+    return []
+
+
+def show_paginated_multiselect_dialog(title="分页多选对话框", options=None, items_per_page=10):
+    """
+    带分页的多选对话框。
+    :param title: 对话框标题
+    :param options: 可选项列表
+    :param items_per_page: 每页显示的选项数量
+    :return: 用户选择的列表
+    """
+    if options is None:
+        options = []
+
+    class PaginatedDialog(QDialog):
+        def __init__(self):
+            super().__init__()
+            self.setWindowTitle(title)
+            self.selected_items = []
+            self.current_page = 0
+
+            self.total_pages = (len(options) + items_per_page - 1) // items_per_page
+            self.stacked_widget = QStackedWidget()
+
+            for i in range(self.total_pages):
+                page_list_widget = QListWidget()
+                start_idx = i * items_per_page
+                end_idx = min(start_idx + items_per_page, len(options))
+                page_list_widget.addItems(options[start_idx:end_idx])
+                page_list_widget.setSelectionMode(QListWidget.MultiSelection)
+                self.stacked_widget.addWidget(page_list_widget)
+
+            self.prev_button = QPushButton("上一页")
+            self.next_button = QPushButton("下一页")
+            self.ok_button = QPushButton("确定")
+            self.cancel_button = QPushButton("取消")
+
+            self.prev_button.clicked.connect(self.show_prev_page)
+            self.next_button.clicked.connect(self.show_next_page)
+            self.ok_button.clicked.connect(self.accept)
+            self.cancel_button.clicked.connect(self.reject)
+
+            layout = QVBoxLayout()
+            layout.addWidget(self.stacked_widget)
+
+            button_layout = QHBoxLayout()
+            button_layout.addWidget(self.prev_button)
+            button_layout.addWidget(self.next_button)
+            button_layout.addWidget(self.ok_button)
+            button_layout.addWidget(self.cancel_button)
+            layout.addLayout(button_layout)
+
+            self.setLayout(layout)
+            self.update_buttons()
+
+        def show_prev_page(self):
+            if self.current_page > 0:
+                self.current_page -= 1
+                self.stacked_widget.setCurrentIndex(self.current_page)
+                self.update_buttons()
+
+        def show_next_page(self):
+            if self.current_page < self.total_pages - 1:
+                self.current_page += 1
+                self.stacked_widget.setCurrentIndex(self.current_page)
+                self.update_buttons()
+
+        def update_buttons(self):
+            self.prev_button.setEnabled(self.current_page > 0)
+            self.next_button.setEnabled(self.current_page < self.total_pages - 1)
+
+        def accept(self):
+            for i in range(self.total_pages):
+                page_widget = self.stacked_widget.widget(i)
+                self.selected_items.extend([item.text() for item in page_widget.selectedItems()])
+            super().accept()
+
+    app = QApplication.instance() or QApplication([])
+    dialog = PaginatedDialog()
+    if dialog.exec():
+        return dialog.selected_items
+    return []
 
 
 def kill_process(process_name: str):
