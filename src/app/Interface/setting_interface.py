@@ -24,7 +24,7 @@ class SettingInterface(QScrollArea):
         super().__init__(parent=parent)
         self.scrollWidget = QWidget(self)
         self.vBoxLayout = QVBoxLayout(self.scrollWidget)
-        self.v2BoxLayout = QVBoxLayout(self.scrollWidget)
+        self.v2BoxLayout = QVBoxLayout()
 
         self.initWidget()
         self.initCard()
@@ -55,8 +55,7 @@ class SettingInterface(QScrollArea):
         self.Setting_Group = SettingCardGroup("基础设置", self.scrollWidget)
 
         steam_game_paths = get_installed_steam_games()
-        game_path = find_limbus(self, steam_game_paths.get("1973530"))
-        model_path = find_model(self, str(BASE_DIR))
+        game_path = find_limbus(steam_game_paths.get("1973530"))
 
         self.select_python_path = FilePathSettingCard(
             FIF.ADD, "Python解释器路径", cfgm.get("BaseSetting.Python_path"), None,
@@ -77,14 +76,9 @@ class SettingInterface(QScrollArea):
                 FIF.ADD, "游戏路径", cfgm.get("BaseSetting.Game_path"), None, "BaseSetting.Game_path"
             )
 
-        if model_path:
-            self.select_model_path = PushSettingCardX(
-                "自动查找模型路径", FIF.ADD, "模型路径", str(model_path), None, "BaseSetting.Model_path"
-            )
-        else:
-            self.select_model_path = FilePathSettingCard(
-                FIF.ADD, "模型路径", cfgm.get("BaseSetting.Model_path"), None, "BaseSetting.Model_path"
-            )
+        self.select_model_path = FilePathSettingCard(
+            FIF.ADD, "模型路径", cfgm.get("BaseSetting.Model_path"), None, "BaseSetting.Model_path"
+        )
 
         # self.state = "安装"
         # self.install_dependencies = PrimaryPushSettingCardX(f"{self.state}", FIF.PLAY, "安装依赖文件",
@@ -102,8 +96,8 @@ class SettingInterface(QScrollArea):
         python_script_path = os.path.join(BASE_DIR, 'src\\utils\\install_dependencies.py')
         process.startDetached(f'python "{python_script_path}"')
 
-    def addSubInterface(self, widget: QLabel, objectName: str, text: str):
-        existing_widget = self.findChild(QLabel, objectName)
+    def addSubInterface(self, widget: QWidget, objectName: str, text: str):
+        existing_widget = self.findChild(QWidget, objectName)
         if existing_widget:
             logger.warning(f"Warning: A widget with objectName '{objectName}' already exists. Skipping addition.")
             return

@@ -1,6 +1,5 @@
 import sys
 from pathlib import Path
-
 from PySide6.QtCore import QTimer
 from PySide6.QtGui import Qt
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel
@@ -37,7 +36,7 @@ class StartInterface(ScrollArea):
 
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.check_task_status)
-        self.timer.start(3000)
+        self.timer.start(1000)
 
     def initWidget(self):
         """初始化滚动区域及样式"""
@@ -87,18 +86,6 @@ class StartInterface(ScrollArea):
 
     def update_button_text(self):
         self.start_card.setText(self.state)
-
-    def add_log_to_gui(self, message, style=""):
-        """
-        动态将日志添加到界面
-        :param message: 日志内容
-        :param style: 可选的样式（HTML 格式）
-        """
-        log_widget = QLabel(message)
-        log_widget.setWordWrap(True)
-        if style:
-            log_widget.setStyleSheet(style)
-        self.vBoxLayout.addWidget(log_widget)
 
     def addSubInterface(self, widget: QLabel, objectName: str, text: str):
         """

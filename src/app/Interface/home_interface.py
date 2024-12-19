@@ -22,7 +22,7 @@ class HomeInterface(ScrollArea):
         super().__init__(parent=parent)
 
         self.view = QWidget(self)
-        self.vBoxLayout = QVBoxLayout(self.view)
+        self.vBoxLayout = QVBoxLayout()
 
         self.banner = BannerWidget(banner_path)
         # self.infoCard = InfoCard()
@@ -47,6 +47,8 @@ class HomeInterface(ScrollArea):
         # self.vBoxLayout.addWidget(self.infoCard)
         self.vBoxLayout.addWidget(self.footerWidget)
         self.vBoxLayout.setAlignment(Qt.AlignTop)
+
+        self.view.setLayout(self.vBoxLayout)
 
 
 class BannerWidget(QWidget):
