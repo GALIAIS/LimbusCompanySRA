@@ -144,6 +144,11 @@ cd LimbusCompanySRA
 
 ---
 
+## 视频
+[![【LBCSRA】边狱巴士 - 自动化脚本程序 | 镜牢、经验本](https://i.ytimg.com/vi_webp/3fuOSPlJuVo/maxresdefault.webp)](https://www.youtube.com/watch?v=3fuOSPlJuVo)
+
+---
+
 ## 🖼️ 界面预览
 
 ### 基础设置

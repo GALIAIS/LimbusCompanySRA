@@ -145,6 +145,10 @@ Ensure the following conditions are met before starting the program:
 
 ---
 
+[![【LBCSRA】边狱巴士 - 自动化脚本程序 | 镜牢、经验本](https://i.ytimg.com/vi_webp/3fuOSPlJuVo/maxresdefault.webp)](https://www.youtube.com/watch?v=3fuOSPlJuVo)
+
+---
+
 ## 🖼️ Interface Preview
 
 ### Basic Settings

@@ -101,8 +101,7 @@ def main():
             python_executable = get_venv_python(venv_path)
 
         model_path = cfgm.get("BaseSetting.Model_path")
-        root_path = cfgm.get("BaseSetting.root_path")
-        if model_path is None or not Path(model_path).exists():
+        if model_path is None:
             build_plan_model()
 
         launch_gui(main_file, python_executable)
