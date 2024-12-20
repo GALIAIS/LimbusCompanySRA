@@ -68,8 +68,7 @@ def build_plan_model():
     """构建 plan 模型"""
     print("正在构建 plan 模型...")
     try:
-        yolo_trt = YoloTRT()
-        yolo_trt.build_engine()
+        YoloTRT.build_engine()
         print("plan 模型构建成功")
     except Exception as e:
         print(f"构建 plan 模型失败: {e}")
@@ -103,7 +102,7 @@ def main():
 
         model_path = cfgm.get("BaseSetting.Model_path")
         root_path = cfgm.get("BaseSetting.root_path")
-        if model_path is None or not Path(model_path).exists() or not any(Path(model_path).glob("*.plan")):
+        if model_path is None or not Path(model_path).exists():
             build_plan_model()
 
         launch_gui(main_file, python_executable)
