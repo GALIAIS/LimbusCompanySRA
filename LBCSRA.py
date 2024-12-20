@@ -1,5 +1,7 @@
 import atexit
 from pathlib import Path
+
+from run import build_plan_model
 from src.app.utils.PathFind import *
 import ctypes
 
@@ -18,6 +20,8 @@ from qfluentwidgets import (NavigationItemPosition, FluentIcon as FIF, MSFluentW
 from src.app.utils.ConfigManager import cfgm
 
 cfgm.set("BaseSetting.Model_path", find_model(str(BASE_DIR)))
+model_path = cfgm.get("BaseSetting.Model_path")
+
 from src.app.Interface.game_interface import GameInterface
 from src.app.Interface.home_interface import HomeInterface
 from src.app.Interface.start_interface import StartInterface

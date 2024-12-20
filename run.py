@@ -1,8 +1,11 @@
+# -*- coding: utf-8 -*-
 import os
 import sys
 import subprocess
 import argparse
 from pathlib import Path
+from src.app.utils.ConfigManager import cfgm
+from src.common.tensorrt.infer import YoloTRT
 
 
 def check_python_installed():
@@ -61,6 +64,18 @@ def launch_gui(main_file, python_executable):
     os._exit(0)
 
 
+def build_plan_model():
+    """构建 plan 模型"""
+    print("正在构建 plan 模型...")
+    try:
+        yolo_trt = YoloTRT()
+        yolo_trt.build_engine()
+        print("plan 模型构建成功")
+    except Exception as e:
+        print(f"构建 plan 模型失败: {e}")
+        sys.exit(1)
+
+
 def main():
     """主函数"""
     try:
@@ -85,6 +100,11 @@ def main():
         else:
             print(f"虚拟环境 {venv_path} 已存在")
             python_executable = get_venv_python(venv_path)
+
+        model_path = cfgm.get("BaseSetting.Model_path")
+        root_path = cfgm.get("BaseSetting.root_path")
+        if model_path is None or not Path(model_path).exists() or not any(Path(model_path).glob("*.plan")):
+            build_plan_model()
 
         launch_gui(main_file, python_executable)
 

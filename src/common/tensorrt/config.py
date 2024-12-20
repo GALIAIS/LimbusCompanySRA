@@ -15,7 +15,7 @@ kConfThresh = 0.25
 kMaxNumOutputBbox = 1000
 kNumBoxElement = 7
 onnx_file = root_path / 'src' / 'common' / 'tensorrt' / 'onnx_model' / 'LBC.onnx'
-trt_file = cfgm.get("BaseSetting.Model_path")
+trt_file = root_path / 'src' / 'model' / 'LBC.plan'
 
 # for FP16 mode
 use_fp16_mode = False
