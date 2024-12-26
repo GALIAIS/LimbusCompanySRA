@@ -231,9 +231,6 @@ Every Star feels like a cup of coffee ☕ for us—fueling our energy!
 
 [Click here to give a Star](https://github.com/GALIAIS/LimbusCompanySRA/stargazers) and let us know you're following along!  
 
-## For more questions, feel free to join our discussion group  
-![QQ Group](https://x.imgex.org/1/6764acbcdedac.jpg)
-
 ---
 
 ## Star History
