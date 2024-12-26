@@ -758,6 +758,7 @@ def abnormality_encounters_event():
         r"调查工厂",
         r"不是",
         r"拒绝"
+        r"献上土偶"
     ]
 
     try:
