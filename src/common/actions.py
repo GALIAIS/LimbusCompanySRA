@@ -779,8 +779,8 @@ def abnormality_encounters_event():
                         cfg.img_src, r"选择一位罪人来进行判定.*"))):
 
                 if (labels_exists(cfg.bboxes, Labels_ID['Skip']) or text_exists(cfg.img_src,
-                                                                                "SKIP")) and not (text_exists(
-                    cfg.img_src, r"该如何快择") or text_exists(cfg.img_src, r"选择一位罪人来进行判定.*")):
+                                                                                "SKIP") or text_exists(
+                    cfg.img_src, r"该如何.*")) and not text_exists(cfg.img_src, r"选择一位罪人来进行判定.*"):
                     if text_exists(cfg.img_src, "SKIP"):
                         check_text_and_clickR(r'SKIP', 10)
                     else:
