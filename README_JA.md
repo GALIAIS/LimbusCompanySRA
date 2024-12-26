@@ -231,9 +231,6 @@ cd LimbusCompanySRA
 
 [こちらをクリックして Star をつけてください](https://github.com/GALIAIS/LimbusCompanySRA/stargazers)。応援してくれているのが分かります！  
 
-## 質問があればお気軽にグループに参加してください  
-![QQグループ](https://x.imgex.org/1/6764acbcdedac.jpg)
-
 ---
 
 ## Star History
