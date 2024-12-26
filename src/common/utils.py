@@ -339,31 +339,52 @@ def move_to_center_and_drag(bbox: list) -> None:
         logger.error(f"拖拽到边界框中心失败: {e}")
 
 
-def move_to_center_and_dragR(bbox: list, direction: str = 'down', distance: int = 300) -> None:
+def move_to_center_and_dragR(bbox: list = None, direction: str = 'down', distance: int = 300) -> None:
     """将鼠标移动到中心点并拖拽"""
     try:
-        if bbox and isinstance(bbox[0], list):
-            bbox = bbox[0]
         if bbox:
-            x0, y0, x1, y1 = float(bbox[0]), float(bbox[1]), float(bbox[2]), float(bbox[3])
-            target_coords = (int((x0 + x1) / 2), int((y0 + y1) / 2))
+            if isinstance(bbox[0], list):
+                bbox = bbox[0]
+            if bbox:
+                x0, y0, x1, y1 = float(bbox[0]), float(bbox[1]), float(bbox[2]), float(bbox[3])
+                target_coords = (int((x0 + x1) / 2), int((y0 + y1) / 2))
+
+                if direction == 'down':
+                    end_coords = (target_coords[0], target_coords[1] + distance)
+                elif direction == 'up':
+                    end_coords = (target_coords[0], target_coords[1] - distance)
+                elif direction == 'left':
+                    end_coords = (target_coords[0] - distance, target_coords[1])
+                elif direction == 'right':
+                    end_coords = (target_coords[0] + distance, target_coords[1])
+                else:
+                    raise ValueError(f"Invalid direction: {direction}")
+
+                current_mouse_pos = get_mouse_pos()
+                move_mouse_to(current_mouse_pos[0], current_mouse_pos[1], target_coords[0], target_coords[1])
+                mouse_down(target_coords[0], target_coords[1])
+                move_mouse_to(target_coords[0], target_coords[1], end_coords[0], end_coords[1])
+                mouse_up(target_coords[0], target_coords[1])
+        else:
+            screen_size = pdi.virtual_size()
+            screen_center = screen_size[0] / 2, screen_size[1] / 2
 
             if direction == 'down':
-                end_coords = (target_coords[0], target_coords[1] + distance)
+                end_coords = (screen_center[0], screen_center[1] + distance)
             elif direction == 'up':
-                end_coords = (target_coords[0], target_coords[1] - distance)
+                end_coords = (screen_center[0], screen_center[1] - distance)
             elif direction == 'left':
-                end_coords = (target_coords[0] - distance, target_coords[1])
+                end_coords = (screen_center[0] - distance, screen_center[1])
             elif direction == 'right':
-                end_coords = (target_coords[0] + distance, target_coords[1])
+                end_coords = (screen_center[0] + distance, screen_center[1])
             else:
                 raise ValueError(f"Invalid direction: {direction}")
 
             current_mouse_pos = get_mouse_pos()
-            move_mouse_to(current_mouse_pos[0], current_mouse_pos[1], target_coords[0], target_coords[1])
-            mouse_down(target_coords[0], target_coords[1])
-            move_mouse_to(target_coords[0], target_coords[1], end_coords[0], end_coords[1])
-            mouse_up(target_coords[0], target_coords[1])
+            move_mouse_to(current_mouse_pos[0], current_mouse_pos[1], screen_center[0], screen_center[1])
+            mouse_down(screen_center[0], screen_center[1])
+            move_mouse_to(screen_center[0], screen_center[1], end_coords[0], end_coords[1])
+            mouse_up(end_coords[0], end_coords[1])
     except Exception as e:
         logger.error(f"拖拽到边界框中心失败: {e}")
 

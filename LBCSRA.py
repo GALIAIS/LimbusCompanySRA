@@ -1,25 +1,23 @@
+import sys
 import atexit
 from pathlib import Path
-
-from src.app.utils.PathFind import *
 import ctypes
 
 if getattr(sys, 'frozen', False):
     BASE_DIR = Path(sys.argv[0]).resolve().parent
 else:
-    BASE_DIR = Path(os.path.abspath("."))
+    BASE_DIR = Path(__file__).resolve().parent
 
 sys.path.append(str(BASE_DIR))
-
-from PySide6.QtCore import QSize, QEventLoop, QTimer
-from PySide6.QtGui import QIcon
+from src.app.utils.PathFind import *
+from PySide6.QtCore import QSize, QEventLoop, QTimer, Qt
+from PySide6.QtGui import QIcon, QGuiApplication, QPixmap
 from PySide6.QtWidgets import QApplication, QMessageBox
 from qfluentwidgets import (NavigationItemPosition, FluentIcon as FIF, MSFluentWindow,
                             setThemeColor, setTheme, Theme, SplashScreen)
 from src.app.utils.ConfigManager import cfgm
 
 cfgm.set("BaseSetting.Model_path", find_model(str(BASE_DIR)))
-
 from src.app.Interface.game_interface import GameInterface
 from src.app.Interface.home_interface import HomeInterface
 from src.app.Interface.start_interface import StartInterface
@@ -37,7 +35,6 @@ class MainWindow(MSFluentWindow):
         super().__init__()
         self.init_window()
         self.initInterface()
-        atexit.register(self.cleanup)
 
     def init_window(self):
         setThemeColor('#810000', lazy=True)
@@ -92,30 +89,39 @@ class MainWindow(MSFluentWindow):
         # self.addSubInterface(self.update_interface, FIF.VIDEO, '更新', position=NavigationItemPosition.BOTTOM)
         self.addSubInterface(self.setting_interface, FIF.SETTING, '设置', position=NavigationItemPosition.BOTTOM)
 
-    def cleanup(self):
+    from PySide6.QtGui import QPixmap, QIcon
+    from PySide6.QtWidgets import QMessageBox, QLabel
+
+    def closeEvent(self, event):
         processes_to_kill = ["PaddleOCR-json.exe"]
+
         for process_name in processes_to_kill:
             if is_process_running(process_name):
                 kill_process(process_name)
 
-    # def closeEvent(self, event):
-    #     """
-    #     重写 closeEvent 方法，在主窗口关闭时执行清理操作。
-    #     """
-    #     processes_to_kill = ["PaddleOCR-json.exe"]
-    #     for process_name in processes_to_kill:
-    #         if is_process_running(process_name):
-    #             kill_process(process_name)
-    #
-    #     # 显示确认对话框 (可选)
-    #     if self.cfgm.get("UI.confirm_exit", True):
-    #         reply = QMessageBox.question(self, "确认退出", "确定要退出程序吗？",
-    #                                      QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-    #         if reply == QMessageBox.No:
-    #             event.ignore()
-    #             return
-    #
-    #     event.accept()
+        if cfgm.get("UI.confirm_exit", True):
+            confirm_dialog = QMessageBox(self)
+            confirm_dialog.setWindowTitle("确认退出")
+            confirm_dialog.setText("<h3>确定要退出程序吗？</h3>")
+            confirm_dialog.setInformativeText("您正在关闭程序，所有未保存的数据将丢失。")
+            confirm_dialog.setIcon(QMessageBox.Question)
+
+            icon_path = BASE_DIR / "src" / "assets" / "icons" / "exit.png"
+            if icon_path.exists():
+                confirm_dialog.setWindowIcon(QIcon(str(icon_path)))
+                confirm_dialog.setIconPixmap(QPixmap(str(icon_path)).scaled(64, 64))
+
+            confirm_dialog.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+            confirm_dialog.button(QMessageBox.Yes).setText("确认")
+            confirm_dialog.button(QMessageBox.No).setText("取消")
+
+            user_response = confirm_dialog.exec()
+            if user_response == QMessageBox.No:
+                event.ignore()
+                return
+
+        cfgm.set("UI.confirm_exit", True)
+        event.accept()
 
 
 if __name__ == '__main__':

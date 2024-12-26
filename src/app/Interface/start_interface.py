@@ -1,7 +1,7 @@
 import sys
 from pathlib import Path
 from PySide6.QtCore import QTimer
-from PySide6.QtGui import Qt
+from PySide6.QtGui import QGuiApplication, Qt
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel
 from loguru import logger
 from qfluentwidgets import ScrollArea, Theme, qconfig, FluentIcon as FIF
@@ -30,16 +30,19 @@ class StartInterface(ScrollArea):
         self.scrollWidget = QWidget(self)
         self.vBoxLayout = QVBoxLayout(self.scrollWidget)
 
+        self.target_window_name = "Limbus Company"
+        self.is_paused = False
+
         self.initWidget()
         self.initCard()
         self.initLayout()
 
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.check_task_status)
+        self.timer.timeout.connect(self.check_focus)
         self.timer.start(1000)
 
     def initWidget(self):
-        """初始化滚动区域及样式"""
         self.scrollWidget.setObjectName('scrollWidget')
         self.setWidget(self.scrollWidget)
         self.setWidgetResizable(True)
@@ -53,7 +56,6 @@ class StartInterface(ScrollArea):
         self.vBoxLayout.addWidget(self.start_card, 20, Qt.AlignTop)
 
     def initCard(self):
-        """初始化脚本启动/停止按钮"""
         self.start_card = PrimaryPushSettingCardX(
             f"{self.state}", FIF.PLAY, "脚本运行", "点击运行脚本"
         )
@@ -104,3 +106,11 @@ class StartInterface(ScrollArea):
         widget.setObjectName(objectName)
         widget.setText(text)
         self.vBoxLayout.addWidget(widget)
+
+    def check_focus(self):
+        active_window = QGuiApplication.focusWindow()
+        if active_window and active_window.title() != self.target_window_name:
+            if not self.is_paused and self.is_task_running():
+                logger.info("目标程序未聚焦，停止脚本运行")
+                self.stop_game()
+                self.is_paused = True

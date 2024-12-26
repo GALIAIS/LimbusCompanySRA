@@ -9,6 +9,7 @@ class Luxcavation:
     def Luxcavation_EXP(self):
         exp_selected: str = str(cfgm.get("Luxcavation.exp_choose.selected"))
         exp_choose: str = cfgm.get("Luxcavation.exp_choose")
+        exp_choose_flag: bool = False
         while True:
             cfg.img_event.wait(timeout=10)
             cfg.bboxes_event.wait(timeout=10)
@@ -19,6 +20,37 @@ class Luxcavation:
                 continue
             cfg.img_event.clear()
             cfg.bboxes_event.clear()
+
+            cfg.img_event.wait(timeout=10)
+            while not text_exists(cfg.img_src, exp_choose[exp_selected]) and not exp_choose_flag:
+                cfg.img_event.wait(timeout=10)
+                if not text_exists(cfg.img_src, exp_choose[exp_selected]) and text_exists(cfg.img_src, '有利属性'):
+                    left_count = 0
+                    right_count = 0
+                    max_attempts = 10
+
+                    while left_count < max_attempts and not text_exists(cfg.img_src,
+                                                                        exp_choose[exp_selected]) and text_exists(
+                        cfg.img_src, '有利属性'):
+                        move_to_center_and_dragR(None, "left")
+                        left_count += 1
+                        if text_exists(cfg.img_src, exp_choose[exp_selected]):
+                            break
+
+                    while right_count < max_attempts and not text_exists(cfg.img_src,
+                                                                         exp_choose[exp_selected]) and text_exists(
+                        cfg.img_src, '有利属性'):
+                        move_to_center_and_dragR(None, "right")
+                        right_count += 1
+                        if text_exists(cfg.img_src, exp_choose[exp_selected]):
+                            break
+
+                    cfg.img_event.clear()
+                if text_exists(cfg.img_src, exp_choose[exp_selected]):
+                    cfg.img_event.clear()
+                    exp_choose_flag = True
+                    break
+            cfg.img_event.clear()
 
             if text_exists(cfg.img_src, '经验') and text_exists(cfg.img_src, r'经验采光.*'):
                 check_model_click(cfg.bboxes, exp_choose[exp_selected], Labels_ID['Enter'])
@@ -71,7 +103,6 @@ class Luxcavation:
             cfg.bboxes_event.clear()
 
     def start_battle(self):
-        """战斗事件流程"""
         win_rate_clicked = False
 
         while True:

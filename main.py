@@ -22,7 +22,6 @@ stop_flag = Event()
 
 
 def run_automation_task():
-    """自动化任务主入口，启动多个线程并监控其状态"""
     logger.info("任务启动")
 
     threads = [
@@ -68,7 +67,7 @@ class AutomationProcessManager:
         self.current_attempt = 0
 
     def start(self):
-        """启动任务进程"""
+        wm.init_window()
         if self.process and self.process.is_alive():
             logger.warning("任务已在运行，无法重复启动")
             return
@@ -82,7 +81,6 @@ class AutomationProcessManager:
         logger.info("任务已启动")
 
     def _run_with_restart(self):
-        """带有重启机制的任务运行方法"""
         while self.current_attempt < self.restart_attempts:
             try:
                 logger.info(f"第 {self.current_attempt + 1} 次尝试运行任务")
@@ -99,7 +97,6 @@ class AutomationProcessManager:
                     break
 
     def stop(self):
-        """停止任务进程"""
         if self.process and self.process.is_alive():
             stop_flag.set()
             self.process.join(timeout=3)
@@ -117,7 +114,6 @@ class AutomationProcessManager:
         self.current_attempt = 0
 
     def is_running(self):
-        """检查任务是否正在运行"""
         try:
             if self.process is None:
                 return False
