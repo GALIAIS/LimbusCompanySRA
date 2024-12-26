@@ -231,8 +231,6 @@ cd LimbusCompanySRA
 
 [点这里 Star 一下](https://github.com/GALIAIS/LimbusCompanySRA/stargazers)，让我们知道你在关注～
 
-## 更多问题可加群讨论
-![QQ群](https://x.imgex.org/1/6764acbcdedac.jpg)
 
 ---
 
