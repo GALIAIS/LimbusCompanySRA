@@ -1,3 +1,9 @@
+## ⚠️ Update Notice
+
+**Please Note:** The update speed of this project is slow, and the code quality may not be ideal. Due to limited personal time and energy, maintenance and improvements to the project may be delayed. Thank you for your understanding and support!
+
+---
+
 ## LimbusCompanySRA
 
 [![Python](https://img.shields.io/badge/Python-3.12%2B-blue)](https://www.python.org/downloads/) [![License](https://img.shields.io/badge/License-AGPL_3.0-green)](https://opensource.org/license/agpl-v3)
@@ -142,10 +148,6 @@ Ensure the following conditions are met before starting the program:
    ```bash
    pip install -r requirements.txt
    ```
-
----
-
-[![【LBCSRA】边狱巴士 - 自动化脚本程序 | 镜牢、经验本](https://i.ytimg.com/vi_webp/3fuOSPlJuVo/maxresdefault.webp)](https://www.youtube.com/watch?v=3fuOSPlJuVo)
 
 ---
 
