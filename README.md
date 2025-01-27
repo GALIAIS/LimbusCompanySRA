@@ -1,3 +1,9 @@
+## ⚠️ 更新提示
+
+**请注意：** 本项目的更新速度较慢，且代码质量可能不尽如人意。由于个人时间和精力有限，项目的维护和改进可能会有所延迟。感谢您的理解与支持！
+
+---
+
 ## LimbusCompanySRA
 
 [![Python](https://img.shields.io/badge/Python-3.12%2B-blue)](https://www.python.org/downloads/) [![License](https://img.shields.io/badge/License-AGPL_3.0-green)](https://opensource.org/license/agpl-v3) [![Stars](https://img.shields.io/github/stars/GALIAIS/LimbusCompanySRA?style=social)](https://github.com/GALIAIS/LimbusCompanySRA/stargazers)
@@ -144,10 +150,6 @@ cd LimbusCompanySRA
 
 ---
 
-## 视频
-[![【LBCSRA】边狱巴士 - 自动化脚本程序 | 镜牢、经验本](https://i.ytimg.com/vi_webp/3fuOSPlJuVo/maxresdefault.webp)](https://www.youtube.com/watch?v=3fuOSPlJuVo)
-
----
 
 ## 🖼️ 界面预览
 
